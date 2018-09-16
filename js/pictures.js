@@ -36,7 +36,6 @@
 
 
   var ESC_KEYCODE = 27;
-  var ENTER_KEYCODE = 13;
 
   var PHOTO_KEY = 'data-id';
 
@@ -150,7 +149,7 @@
     if (templateBySelector) {
       return templateBySelector.content.querySelector(contentSelector);
     }
-    return undefined;
+    return false;
   };
 
   var renderComments = function (parent, comments) {
@@ -220,13 +219,6 @@
     hideEditingForm();
   };
 
-  var onCancelButtonKeyDown = function (evt) {
-    if (evt.keyCode === ENTER_KEYCODE) {
-      evt.preventDefault();
-      hideEditingForm();
-    }
-  };
-
   var onEditingDocumentKeyDown = function (evt) {
     if (evt.keyCode === ESC_KEYCODE) {
       evt.preventDefault();
@@ -240,7 +232,15 @@
   };
 
   var onPinMouseUp = function (evt) {
-    setEffectLevel(evt.offsetLeft);
+    refreshEffectLevel(evt.target.offsetLeft);
+  };
+
+  var refreshEffectLevel = function (pinOffsetLeft) {
+    var currentEffect = getElementBySelector(editingForm, CURRENT_EFFECT_SELECTOR);
+    setEffectLevel(pinOffsetLeft);
+    if (currentEffect && editingFormImgPreview && editingFormEffectLevel) {
+      setStyleByEffectLevel(editingFormImgPreview, currentEffect.value, editingFormEffectLevel.value);
+    }
   };
 
   var setEffectLevel = function (pinOffsetLeft) {
@@ -252,13 +252,13 @@
   var getEffectLevel = function (pinOffsetLeft) {
     var power = 0;
     if (editingFormPin && editingFormPin.parentElement) {
-      power = calculateEffectPower(pinOffsetLeft, editingFormPin.clientWidth, editingFormPin.parentElement.clientWidth);
+      power = calculateEffectPower(pinOffsetLeft, editingFormPin.parentElement.clientWidth);
     }
     return power;
   };
 
-  var calculateEffectPower = function (pinX, pinWidth, lineWidth) {
-    return (lineWidth) === 0 ? 0 : 100 * (pinX - pinWidth / 2) / lineWidth;
+  var calculateEffectPower = function (pinX, lineWidth) {
+    return (lineWidth) === 0 ? 0 : Math.round(pinX / lineWidth * 100);
   };
 
   var showEditingForm = function () {
@@ -266,7 +266,7 @@
       setEditingFormInteractivity();
       removeClassName(editingForm, 'hidden');
       setEffectLevel(editingFormPin.offsetLeft);
-      var currentEffect = document.querySelector(CURRENT_EFFECT_SELECTOR);
+      var currentEffect = editingForm.querySelector(CURRENT_EFFECT_SELECTOR);
       if (currentEffect) {
         applyEffect(currentEffect.value);
       }
@@ -282,22 +282,24 @@
   };
 
   var setEditingFormInteractivity = function () {
+    document.addEventListener('keydown', onEditingDocumentKeyDown);
     if (editingFormCancel) {
       editingFormCancel.addEventListener('click', onCancelButtonClick);
-      editingFormCancel.addEventListener('keydown', onCancelButtonKeyDown);
-      document.addEventListener('keydown', onEditingDocumentKeyDown);
+    }
+    if (editingForm && editingFormPin) {
       editingFormPin.addEventListener('mouseup', onPinMouseUp);
-      editingFormEffects.addEventListener('click', onEffectsClick);
+      editingForm.addEventListener('change', onEffectsChange);
     }
   };
 
   var removeEditingFormInteractivity = function () {
+    document.removeEventListener('keydown', onEditingDocumentKeyDown);
     if (editingFormCancel) {
       editingFormCancel.removeEventListener('click', onCancelButtonClick);
-      editingFormCancel.removeEventListener('keydown', onCancelButtonKeyDown);
-      document.removeEventListener('keydown', onEditingDocumentKeyDown);
+    }
+    if (editingForm && editingFormPin) {
       editingFormPin.removeEventListener('mouseup', onPinMouseUp);
-      editingFormEffects.removeEventListener('click', onEffectsClick);
+      editingFormEffects.removeEventListener('change', onEffectsChange);
     }
   };
 
@@ -305,17 +307,10 @@
     uploadFile.value = '';
   };
 
-  var onEffectsClick = function (evt) {
+  var onEffectsChange = function (evt) {
     var el = evt.target;
-    if (el.tagName.toUpperCase() !== 'INPUT') {
-      return false;
-    }
-    while (el !== editingFormEffects) {
-      if (el.name === 'effect') {
-        applyEffect(el.value);
-        return false;
-      }
-      el = el.parentNode;
+    if (el.name === 'effect' && el.tagName === 'INPUT') {
+      applyEffect(el.value);
     }
     return false;
   };
@@ -336,7 +331,7 @@
   };
 
   var getFilterText = function (effect, level) {
-    var filterText = '';
+    var filterText = 'none';
     var params = EFFECTS[effect];
     if (effect === 'none') {
       return filterText;
@@ -354,13 +349,6 @@
   var onBigCancelButtonClick = function (evt) {
     evt.preventDefault();
     hideBigPhoto();
-  };
-
-  var onBigCancelButtonKeyDown = function (evt) {
-    if (evt.keyCode === ENTER_KEYCODE) {
-      evt.preventDefault();
-      hideBigPhoto();
-    }
   };
 
   var onBigDocumentKeyDown = function (evt) {
@@ -386,18 +374,16 @@
   };
 
   var setBigPhotoInteractivity = function () {
+    document.addEventListener('keydown', onBigDocumentKeyDown);
     if (bigPhotoCancel) {
       bigPhotoCancel.addEventListener('click', onBigCancelButtonClick);
-      bigPhotoCancel.addEventListener('keydown', onBigCancelButtonKeyDown);
-      document.addEventListener('keydown', onBigDocumentKeyDown);
     }
   };
 
   var removeBigPhotoInteractivity = function () {
+    document.removeEventListener('keydown', onBigDocumentKeyDown);
     if (bigPhotoCancel) {
       bigPhotoCancel.removeEventListener('click', onBigCancelButtonClick);
-      bigPhotoCancel.removeEventListener('keydown', onBigCancelButtonKeyDown);
-      document.removeEventListener('keydown', onBigDocumentKeyDown);
     }
   };
 
@@ -441,9 +427,9 @@
   var editingForm = getElementBySelector(pictures, '.img-upload__overlay');
   var editingFormCancel = getElementBySelector(editingForm, '#upload-cancel');
   var editingFormPin = getElementBySelector(editingForm, '.effect-level__pin');
-  var editingFormEffects = getElementBySelector(editingForm, '.effects__list');
+  var editingFormEffects = getElementBySelector(editingForm, CURRENT_EFFECT_SELECTOR);
   var editingFormEffectLevel = getElementBySelector(editingForm, '.effect-level__value');
-  var editingFormImgPreview = getElementBySelector(editingForm, '.img-upload__preview');
+  var editingFormImgPreview = getElementBySelector(editingForm, '.img-upload__preview > img');
 
   var bigPhoto = document.querySelector('.big-picture');
   var bigPhotoCancel = getElementBySelector(bigPhoto, '#picture-cancel');
