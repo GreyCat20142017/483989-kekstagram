@@ -273,7 +273,7 @@
   };
 
   var calculateEffectPower = function (pinX, lineWidth) {
-    return (lineWidth) === 0 ? 0 : Math.round(pinX / lineWidth * 100);
+    return (lineWidth === 0) ? 0 : Math.round(pinX / lineWidth * 100);
   };
 
   var showEditingForm = function () {
@@ -349,7 +349,7 @@
   var applyEffect = function (effect) {
     if (editingFormImgPreview && editingFormEffectLevel) {
       removeAlternatives(editingFormImgPreview, effectPreviewClasses);
-      if (!(effect === 'none')) {
+      if (effect !== 'none') {
         addClassName(editingFormImgPreview, EFFECT_PREVIEW_PREFIX + effect);
       }
       setStyleByEffectLevel(editingFormImgPreview, effect, editingFormEffectLevel.value);
@@ -454,7 +454,7 @@
     var validationResult = [];
 
     for (var i = 0; i < arr.length; i++) {
-      if (!(arr[i][0] === '#')) {
+      if (arr[i][0] !== '#') {
         validationResult.push(singleTagRules['needStartHash'].errorMessage);
       }
       if ((arr[i][0] === '#') && (arr[i].length) < HASH_TAG_MIN_LENGTH) {
