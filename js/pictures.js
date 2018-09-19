@@ -44,6 +44,9 @@
   var HASH_TAG_MAX_AMOUNT = 5;
   var DESCRIPTION_MAX_LENGTH = 140;
 
+  var DEFAULT_EFFECT_LEVEL = 100;
+  var DEFAULT_EFFECT_NAME = 'none';
+
   var getRandomAvatar = function () {
     return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
   };
@@ -115,13 +118,13 @@
   };
 
   var removeClassName = function (obj, className) {
-    if (obj.classList.contains(className)) {
+    if (obj && obj.classList.contains(className)) {
       obj.classList.remove(className);
     }
   };
 
   var addClassName = function (obj, className) {
-    if (!obj.classList.contains(className)) {
+    if (obj && !obj.classList.contains(className)) {
       obj.classList.add(className);
     }
   };
@@ -246,44 +249,89 @@
     showEditingForm();
   };
 
-  var onPinMouseUp = function (evt) {
-    refreshEffectLevel(evt.target.offsetLeft);
+  var getXCoord = function (elem) {
+    return elem.getBoundingClientRect().x;
   };
 
-  var refreshEffectLevel = function (pinOffsetLeft) {
-    var currentEffect = getElementBySelector(editingForm, CURRENT_EFFECT_SELECTOR);
-    setEffectLevel(pinOffsetLeft);
-    if (currentEffect && editingFormImgPreview && editingFormEffectLevel) {
-      setStyleByEffectLevel(editingFormImgPreview, currentEffect.value, editingFormEffectLevel.value);
+  var getLimitedValue = function (newX, rightLimit) {
+    if (newX < 0) {
+      return 0;
     }
+    if (newX > rightLimit) {
+      return rightLimit;
+    }
+    return newX;
   };
 
-  var setEffectLevel = function (pinOffsetLeft) {
+  var setEffectLevelValue = function (percent) {
     if (editingFormEffectLevel) {
-      editingFormEffectLevel.value = getEffectLevel(pinOffsetLeft);
+      editingFormEffectLevel.setAttribute('value', Math.round(100 * percent) / 100);
     }
   };
 
-  var getEffectLevel = function (pinOffsetLeft) {
-    var power = 0;
-    if (editingFormPin && editingFormPin.parentElement) {
-      power = calculateEffectPower(pinOffsetLeft, editingFormPin.parentElement.clientWidth);
+  var getEffectLevelValue = function () {
+    if (editingFormEffectLevel) {
+      if (!editingFormEffectLevel.hasAttribute('value')) {
+        setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
+      }
+      return editingFormEffectLevel.getAttribute('value');
     }
-    return power;
+    return DEFAULT_EFFECT_LEVEL;
   };
 
-  var calculateEffectPower = function (pinX, lineWidth) {
-    return (lineWidth === 0) ? 0 : Math.round(pinX / lineWidth * 100);
+  var changeEffectLevelStyles = function () {
+    if (editingFormPin && editingFormEffectLevel && editingFormEffectDepth) {
+      editingFormPin.style.left = getEffectLevelValue() + '%';
+      editingFormEffectDepth.style.width = getEffectLevelValue() + '%';
+      setStyleByEffectLevel(editingFormImgPreview, getCurrentEffect(), getEffectLevelValue());
+    }
+  };
+
+  var getCurrentEffect = function () {
+    var currentEffect = getElementBySelector(editingForm, CURRENT_EFFECT_SELECTOR);
+    return (currentEffect) ? currentEffect.value : DEFAULT_EFFECT_NAME;
+  };
+
+
+  var onPinMouseDown = function (evt) {
+    var refreshSliderState = function (moveUpEvt) {
+      var newX = moveUpEvt.pageX - shiftX - sliderX;
+      var lineWidth = editingFormPin.parentElement.offsetWidth;
+      var sliderValue = getLimitedValue(newX, lineWidth) / lineWidth * 100;
+      setEffectLevelValue(sliderValue);
+      changeEffectLevelStyles();
+    };
+
+    var onPinMouseUp = function (upEvt) {
+      if (editingFormPin) {
+        refreshSliderState(upEvt);
+        document.removeEventListener('mouseup', onPinMouseUp);
+        document.removeEventListener('mousemove', onPinMouseMove);
+      }
+    };
+
+    var onPinMouseMove = function (moveEvt) {
+      refreshSliderState(moveEvt);
+    };
+
+    if (editingFormPin) {
+      var sliderX = getXCoord(editingFormPin.parentElement);
+      var pinX = getXCoord(editingFormPin);
+      var shiftX = evt.pageX - pinX;
+      evt.preventDefault();
+      document.addEventListener('mouseup', onPinMouseUp);
+      document.addEventListener('mousemove', onPinMouseMove);
+    }
   };
 
   var showEditingForm = function () {
     if (editingForm) {
       setEditingFormInteractivity();
       removeClassName(editingForm, 'hidden');
-      setEffectLevel(editingFormPin.offsetLeft);
       var currentEffect = editingForm.querySelector(CURRENT_EFFECT_SELECTOR);
       if (currentEffect) {
         applyEffect(currentEffect.value);
+        changeEffectLevelStyles();
       }
     }
   };
@@ -306,7 +354,7 @@
       editingFormCancel.addEventListener('click', onCancelButtonClick);
     }
     if (editingForm && editingFormPin) {
-      editingFormPin.addEventListener('mouseup', onPinMouseUp);
+      editingFormPin.addEventListener('mousedown', onPinMouseDown);
       editingForm.addEventListener('change', onFormChange);
     }
   };
@@ -317,7 +365,7 @@
       editingFormCancel.removeEventListener('click', onCancelButtonClick);
     }
     if (editingForm && editingFormPin) {
-      editingFormPin.removeEventListener('mouseup', onPinMouseUp);
+      editingFormPin.removeEventListener('mousedown', onPinMouseDown);
       editingForm.removeEventListener('change', onFormChange);
     }
   };
@@ -331,7 +379,9 @@
     if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
       switch (el.name) {
         case 'effect':
+          setEffectLevelValue(100);
           applyEffect(el.value);
+          changeEffectLevelStyles();
           break;
         case 'hashtags':
           validateHashInput(el);
@@ -349,10 +399,17 @@
   var applyEffect = function (effect) {
     if (editingFormImgPreview && editingFormEffectLevel) {
       removeAlternatives(editingFormImgPreview, effectPreviewClasses);
-      if (effect !== 'none') {
+      if (effect !== DEFAULT_EFFECT_NAME) {
         addClassName(editingFormImgPreview, EFFECT_PREVIEW_PREFIX + effect);
+        if (editingFormEffectContainer) {
+          removeClassName(editingFormEffectContainer, 'visually-hidden');
+        }
+      } else {
+        if (editingFormEffectContainer) {
+          addClassName(editingFormEffectContainer, 'visually-hidden');
+        }
       }
-      setStyleByEffectLevel(editingFormImgPreview, effect, editingFormEffectLevel.value);
+      setStyleByEffectLevel(editingFormImgPreview, effect, getEffectLevelValue());
     }
   };
 
@@ -364,7 +421,7 @@
   var getFilterText = function (effect, level) {
     var filterText = 'none';
     var params = EFFECTS[effect];
-    if (effect === 'none') {
+    if (effect === DEFAULT_EFFECT_NAME) {
       return filterText;
     }
     if (params) {
@@ -510,8 +567,11 @@
   var editingForm = getElementBySelector(pictures, '.img-upload__overlay');
   var editingFormCancel = getElementBySelector(editingForm, '#upload-cancel');
   var editingFormPin = getElementBySelector(editingForm, '.effect-level__pin');
-  var editingFormEffectLevel = getElementBySelector(editingForm, '.effect-level__value');
+  var editingFormEffectContainer = getElementBySelector(editingForm, '.img-upload__effect-level');
+  var editingFormEffectLevel = getElementBySelector(editingFormEffectContainer, '.effect-level__value');
+  var editingFormEffectDepth = getElementBySelector(editingFormEffectContainer, '.effect-level__depth');
   var editingFormImgPreview = getElementBySelector(editingForm, '.img-upload__preview > img');
+
 
   var bigPhoto = document.querySelector('.big-picture');
   var bigPhotoCancel = getElementBySelector(bigPhoto, '#picture-cancel');
