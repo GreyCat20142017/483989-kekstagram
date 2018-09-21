@@ -23,6 +23,5 @@
       evt.preventDefault();
       action();
     }
-
   };
 })();

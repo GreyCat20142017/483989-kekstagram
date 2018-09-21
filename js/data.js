@@ -1,7 +1,6 @@
 'use strict';
 
 (function () {
-
   var OBJECT_AMOUNT = 25;
   var LIKES_AMOUNT_MIN = 15;
   var LIKES_AMOUNT_MAX = 200;
@@ -50,7 +49,6 @@
   };
 
   window.data = {
-
     generateObjectArray: function () {
       var dataArray = [];
       for (var i = 0; i < OBJECT_AMOUNT; i++) {
@@ -67,6 +65,5 @@
     getRandomAvatar: function () {
       return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
     }
-
   };
 })();

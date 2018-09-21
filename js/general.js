@@ -1,7 +1,6 @@
 'use strict';
 
 (function () {
-
   var EFFECTS = {'none': {},
     'chrome': {scaleMin: 0, scaleMax: 1, unit: '', filterName: 'grayscale'},
     'sepia': {scaleMin: 0, scaleMax: 1, unit: '', filterName: 'sepia'},

@@ -68,7 +68,6 @@
   };
 
   var renderForm = function (dataElement) {
-
     if (form) {
       window.dom.setAttributeBySelector(form, '.big-picture__img > img', 'src', dataElement.url);
       window.dom.setAttributeBySelector(form, '.likes-count', 'textContent', dataElement.likes);
@@ -86,7 +85,6 @@
       window.dom.addClassNameBySelector(form, '.comments-loader', 'visually-hidden');
     }
   };
-
 
   window.preview = {
     showBigPhoto: show

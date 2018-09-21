@@ -37,6 +37,5 @@
     getValueByScale: function (min, max, level) {
       return Math.round(100 * (min + level * (max - min) / 100)) / 100;
     }
-
   };
 })();

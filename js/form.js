@@ -1,14 +1,11 @@
 'use strict';
 
 (function () {
-
   var NO_ESCAPE_NAMES = ['hashtags', 'description'];
   var HASH_TAG_MIN_LENGTH = 2;
   var HASH_TAG_MAX_LENGTH = 20;
   var HASH_TAG_MAX_AMOUNT = 5;
   var DESCRIPTION_MAX_LENGTH = 140;
-
-
   var EFFECT_PREVIEW_PREFIX = 'effects__preview--';
 
   var form = window.links.editingFormLinks.form;
@@ -83,7 +80,6 @@
   var onDocumentKeyDown = function (evt) {
     window.events.isEscEvent(evt, hide);
   };
-
 
   var show = function () {
     if (form) {

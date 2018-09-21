@@ -18,7 +18,6 @@
   var totalComments = document.querySelector('.social__comment-count');
 
   window.links = {
-
     editingFormLinks: {
       form: editingForm,
       formCancel: editingFormCancel,
@@ -29,18 +28,15 @@
       formImgPreview: editingFormImgPreview,
       uploadFile: uploadFile
     },
-
     galleryLinks: {
       uploadFile: uploadFile,
       pictures: pictures
     },
-
     previewLinks: {
       bigPhoto: bigPhoto,
       bigPhotoCancel: bigPhotoCancel,
       pseudoTemplate: pseudoTemplate,
       totalComments: totalComments
     }
-
   };
 })();

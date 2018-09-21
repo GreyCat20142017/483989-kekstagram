@@ -1,12 +1,9 @@
 'use strict';
 
 (function () {
-
   var PHOTO_KEY = 'data-id';
 
-
   var renderPhotos = function (dataArray) {
-
     var createPhoto = function (template, dataElement) {
       var element = template.cloneNode(true);
       window.dom.setAttributeBySelector(element, '.picture__img', 'src', dataElement.url);
@@ -18,7 +15,6 @@
 
     var template = window.dom.getTemplateContent('#picture', '.picture');
     var insertionPoint = document.querySelector('.pictures');
-
     if (template && insertionPoint) {
       var fragment = document.createDocumentFragment();
       for (var i = 0; i < dataArray.length; i++) {
@@ -27,7 +23,6 @@
       insertionPoint.appendChild(fragment);
     }
   };
-
 
   var onPicturesClick = function (evt) {
     var el = evt.target;
@@ -69,10 +64,7 @@
   var uploadFile = window.links.galleryLinks.uploadFile;
   var editingFormLinks = window.links.editingFormLinks;
   var previewLinks = window.links.previewLinks;
-
-
   var photos = window.common.shuffleArray(window.data.generateObjectArray());
-
   initGallery();
 
 })();
