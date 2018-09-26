@@ -8,7 +8,6 @@
   var COMMENTS_JOIN_MAX = 2;
   var COMMENTS_AMOUNT_MIN = 0;
   var COMMENTS_AMOUNT_MAX = 22;
-
   var COMMENTS = ['Всё отлично!',
     'В целом всё неплохо. Но не всё.',
     'Когда вы делаете фотографию, хорошо бы убирать палец из кадра. В конце концов это просто непрофессионально.',
@@ -48,22 +47,29 @@
     return arr;
   };
 
-  window.data = {
-    generateObjectArray: function () {
-      var dataArray = [];
-      for (var i = 0; i < OBJECT_AMOUNT; i++) {
-        dataArray[i] = {};
-        dataArray[i]['url'] = 'photos/' + (i + 1) + '.jpg';
-        dataArray[i]['likes'] = getRandomFromRange(LIKES_AMOUNT_MIN, LIKES_AMOUNT_MAX);
-        dataArray[i]['comments'] = getRandomComplexArray(COMMENTS, getRandomFromRange(COMMENTS_AMOUNT_MIN, COMMENTS_AMOUNT_MAX), COMMENTS_JOIN_MIN, COMMENTS_JOIN_MAX);
-        dataArray[i]['description'] = getRandomFromArray(DESCRIPTIONS);
-        dataArray[i]['id'] = 'id-' + i;
-      }
-      return dataArray;
-    },
+  var generateObjectArray = function () {
+    var dataArray = [];
+    for (var i = 0; i < OBJECT_AMOUNT; i++) {
+      dataArray[i] = {};
+      dataArray[i]['url'] = 'photos/' + (i + 1) + '.jpg';
+      dataArray[i]['likes'] = getRandomFromRange(LIKES_AMOUNT_MIN, LIKES_AMOUNT_MAX);
+      dataArray[i]['comments'] = getRandomComplexArray(COMMENTS, getRandomFromRange(COMMENTS_AMOUNT_MIN, COMMENTS_AMOUNT_MAX), COMMENTS_JOIN_MIN, COMMENTS_JOIN_MAX);
+      dataArray[i]['description'] = getRandomFromArray(DESCRIPTIONS);
+      dataArray[i]['id'] = 'id-' + i;
+    }
+    return dataArray;
+  };
 
-    getRandomAvatar: function () {
-      return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
+  var getRandomAvatar = function () {
+    return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
+  };
+
+  window.data = {
+    generateObjectArray: generateObjectArray,
+    getRandomAvatar: getRandomAvatar,
+    getRandomFromArray: getRandomFromArray,
+    getRandomDescription: function () {
+      return getRandomFromArray(DESCRIPTIONS);
     }
   };
 })();

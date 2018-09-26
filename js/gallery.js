@@ -13,8 +13,8 @@
       return element;
     };
 
-    var template = window.dom.getTemplateContent('#picture', '.picture');
-    var insertionPoint = document.querySelector('.pictures');
+    var template = userPhotoTemplate;
+    var insertionPoint = pictures;
     if (template && insertionPoint) {
       var fragment = document.createDocumentFragment();
       for (var i = 0; i < dataArray.length; i++) {
@@ -26,7 +26,7 @@
 
   var onPicturesClick = function (evt) {
     var el = evt.target;
-    if (el.tagName.toUpperCase() !== 'IMG') {
+    if (el.tagName !== 'IMG') {
       return false;
     }
     evt.preventDefault();
@@ -35,8 +35,8 @@
         var index = photos.indexOf(photos.filter(function (item) {
           return item.id === el.getAttribute(PHOTO_KEY);
         })[0]);
-        if ((index >= 0) && (index < photos.length)) {
-          window.preview.showBigPhoto(photos[index]);
+        if ((index >= 0) && (index < photos.length) && window.preview) {
+          window.preview.showBigPhoto(photos[index], links);
         }
         return false;
       }
@@ -47,24 +47,77 @@
 
   var onUploadFileChange = function (evt) {
     evt.preventDefault();
-    window.form.showEditingForm();
+    if (window.form) {
+      window.form.showEditingForm(links, messages);
+    }
+  };
+
+  var checkModuleAddition = function () {
+    var modules = ['common', 'data', 'general', 'dom', 'events', 'links'];
+    for (var i = 0; i < modules.length; i++) {
+      if (!window[modules[i]]) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  var useRandomData = function () {
+    photos = window.common.shuffleArray(window.data.generateObjectArray());
+    renderPhotos(photos);
+  };
+
+  var initMessages = function (templates, insertionPoint) {
+    var fragment = document.createDocumentFragment();
+    for (var i = 0; i < templates.length; i++) {
+      if (templates[i] && insertionPoint) {
+        var message = fragment.appendChild(templates[i].cloneNode(true));
+        window.general.addClassName(message, 'visually-hidden');
+      }
+    }
+    insertionPoint.appendChild(fragment);
+    return {errorMessage: window.dom.getElementBySelector(insertionPoint, '.error'),
+      successMessage: window.dom.getElementBySelector(insertionPoint, '.success')};
   };
 
   var initGallery = function () {
-    renderPhotos(photos);
-    if (uploadFile && editingFormLinks.form && editingFormLinks.formCancel) {
+    if (window.backend) {
+      window.backend.getData(onGet, onGetError);
+    } else {
+      useRandomData();
+    }
+
+    if (uploadFile && links.formOverlay && links.formCancel) {
       uploadFile.addEventListener('change', onUploadFileChange);
     }
-    if (pictures && previewLinks.bigPhoto && previewLinks.bigPhotoCancel) {
+    if (pictures && links.bigPhoto && links.bigPhotoCancel) {
       pictures.addEventListener('click', onPicturesClick);
     }
   };
 
-  var pictures = window.links.galleryLinks.pictures;
-  var uploadFile = window.links.galleryLinks.uploadFile;
-  var editingFormLinks = window.links.editingFormLinks;
-  var previewLinks = window.links.previewLinks;
-  var photos = window.common.shuffleArray(window.data.generateObjectArray());
-  initGallery();
+  var onGet = function (response) {
+    photos = [];
+    for (var i = 0; i < response.length; i++) {
+      photos[i] = response[i];
+      photos[i]['description'] = window.data.getRandomDescription();
+      photos[i]['id'] = 'id-' + i;
+    }
+    renderPhotos(photos);
+  };
+
+  var onGetError = function (errorMessage) {
+    window.message.init(messages.errorMessage, errorMessage, true);
+    useRandomData();
+  };
+
+  if (checkModuleAddition()) {
+    var links = window.links;
+    var pictures = links.pictures;
+    var uploadFile = links.uploadFile;
+    var userPhotoTemplate = links.userPhotoTemplate;
+    var messages = initMessages([links.errorMessageTemplate, links.successMessageTemplate], links.main);
+    var photos = [];
+    initGallery();
+  }
 
 })();
