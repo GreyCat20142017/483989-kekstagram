@@ -45,7 +45,7 @@
     var renderComments = function (parent, comments) {
       var createComment = function (template, comment) {
         var element = template.cloneNode(true);
-        window.dom.setAttributeBySelector(element, '.social__picture', 'src', window.data.getRandomAvatar());
+        window.dom.setAttributeBySelector(element, '.social__picture', 'src', window.common.getRandomAvatar());
         window.dom.setAttributeBySelector(element, '.social__text', 'textContent', comment);
         return element;
       };

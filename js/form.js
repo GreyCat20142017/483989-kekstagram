@@ -38,22 +38,21 @@
       };
 
       var validationResult = [];
-
-      for (var i = 0; i < arr.length; i++) {
-        if (arr[i][0] !== '#') {
+      arr.forEach(function (item) {
+        if (item[0] !== '#') {
           validationResult.push(singleTagRules['needStartHash'].errorMessage);
         }
-        if ((arr[i][0] === '#') && (arr[i].length) < HASH_TAG_MIN_LENGTH) {
+        if ((item[0] === '#') && (item.length) < HASH_TAG_MIN_LENGTH) {
           validationResult.push(singleTagRules['notOnlyHash'].errorMessage);
         }
-        if ((arr[i][0] === '#') && (arr[i].length) > HASH_TAG_MAX_LENGTH) {
+        if ((item[0] === '#') && (item.length) > HASH_TAG_MAX_LENGTH) {
           validationResult.push(singleTagRules['maxLengthLimit'].errorMessage);
         }
-        var hashesInTag = arr[i].match(/#/g);
+        var hashesInTag = item.match(/#/g);
         if (Array.isArray(hashesInTag) ? (hashesInTag.length > 1) : false) {
           validationResult.push(singleTagRules['needSpace'].errorMessage);
         }
-      }
+      });
 
       if (arr.length > window.common.getUniqueFromArray(arr).length) {
         validationResult.push(commonTagRules['doubleDetected'].errorMessage);
@@ -86,16 +85,16 @@
 
     var getCustomValidationResult = function () {
       var result = true;
-      for (var i = 0; i < formInputs.length; i++) {
-        result = result && formInputs[i].validity.valid;
-      }
+      formInputs.forEach(function (item) {
+        result = result && item.validity.valid;
+      });
       return result;
     };
 
     var resetFormInputs = function () {
-      for (var i = 0; i < formInputs.length; i++) {
-        formInputs[i].value = '';
-      }
+      formInputs.forEach(function (item) {
+        item.value = '';
+      });
       uploadFile.value = '';
     };
 
@@ -164,7 +163,7 @@
       if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
         switch (el.name) {
           case 'effect':
-            setEffectLevelValue(100);
+            setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
             applyEffect(el.value);
             changeEffectLevelStyles();
             break;
@@ -287,7 +286,7 @@
 
     var onPost = function () {
       hide();
-      window.message.init(messages.successMessage, 'Ура! Привет от озерных водяных!');
+      window.message.init(messages.successMessage);
     };
 
     var onSubmit = function (evt) {

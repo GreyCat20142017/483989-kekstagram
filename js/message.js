@@ -53,10 +53,16 @@
       }
     };
 
+    var setMessageTitle = function (text) {
+      var msgTitle = window.dom.getElementBySelector(messageLink, 'h2');
+      if (msgTitle) {
+        msgTitle.textContent = text;
+      }
+    };
+
     var buttons = messageLink.querySelectorAll('button');
-    var msgTitle = window.dom.getElementBySelector(messageLink, 'h2');
-    if (msgTitle) {
-      msgTitle.textContent = messageTitle;
+    if (messageTitle) {
+      setMessageTitle(messageTitle);
     }
     show();
   };

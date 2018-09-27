@@ -2,26 +2,19 @@
 
 (function () {
 
+  var getRandomFromRange = function (min, max) {
+    return Math.floor(min + Math.random() * (max + 1 - min));
+  };
+
   window.common = {
     getUniqueFromArray: function (arr) {
       var obj = {};
-      for (var i = 0; i < arr.length; i++) {
-        obj[arr[i].toString()] = true;
-      }
+      arr.forEach(function (item) {
+        obj[item.toString()] = true;
+      });
       return Object.keys(obj).map(function (key) {
         return key;
       });
-    },
-
-    shuffleArray: function (arr) {
-      var array = arr.slice();
-      for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-      }
-      return array;
     },
 
     getLimitedValue: function (newValue, leftLimit, rightLimit) {
@@ -36,6 +29,10 @@
 
     getValueByScale: function (min, max, level) {
       return Math.round(100 * (min + level * (max - min) / 100)) / 100;
+    },
+
+    getRandomAvatar: function () {
+      return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
     }
   };
 })();
