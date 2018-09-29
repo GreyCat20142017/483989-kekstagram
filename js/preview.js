@@ -1,7 +1,7 @@
 'use strict';
 
 (function () {
-  var COMMENTS_AMOUNT_IN_MARKUP = 5;
+  var COMMENTS_PORTION_IN_MARKUP = 5;
 
   var init = function (dataElement, links) {
 
@@ -20,6 +20,19 @@
       }
     };
 
+    var loadMore = function () {
+      var nextStage = shownCommentsAmount + Math.min(dataElement.comments.length - shownCommentsAmount, COMMENTS_PORTION_IN_MARKUP);
+      for (var i = shownCommentsAmount; i < nextStage; i++) {
+        window.general.removeClassName(formComments.childNodes[i], 'visually-hidden');
+      }
+      shownCommentsAmount = nextStage;
+      setLoaderState();
+    };
+
+    var onLoaderClick = function (evt) {
+      window.events.isEvent(evt, loadMore);
+    };
+
     var onCancelButtonClick = function (evt) {
       window.events.isEvent(evt, hide);
     };
@@ -33,6 +46,9 @@
       if (formCancel) {
         formCancel.addEventListener('click', onCancelButtonClick);
       }
+      if (formCommentsLoader) {
+        formCommentsLoader.addEventListener('click', onLoaderClick);
+      }
     };
 
     var removeFormInteractivity = function () {
@@ -40,27 +56,50 @@
       if (formCancel) {
         formCancel.removeEventListener('click', onCancelButtonClick);
       }
+      if (formCommentsLoader) {
+        formCommentsLoader.removeEventListener('click', onLoaderClick);
+      }
     };
 
     var renderComments = function (parent, comments) {
-      var createComment = function (template, comment) {
+      var createComment = function (template, comment, index) {
         var element = template.cloneNode(true);
         window.dom.setAttributeBySelector(element, '.social__picture', 'src', window.common.getRandomAvatar());
         window.dom.setAttributeBySelector(element, '.social__text', 'textContent', comment);
+        if (index >= shownCommentsAmount) {
+          window.general.addClassName(element, 'visually-hidden');
+        }
         return element;
       };
 
-      var insertionPoint = parent.querySelector('.social__comments');
+      var insertionPoint = formComments;
       if (insertionPoint && pseudoTemplate) {
         var template = pseudoTemplate.cloneNode(true);
         var fragment = document.createDocumentFragment();
         window.dom.removeChildren(insertionPoint);
         if (comments.length > 0) {
-          for (var i = 0; i < Math.min(comments.length, COMMENTS_AMOUNT_IN_MARKUP); i++) {
-            fragment.appendChild(createComment(template, comments[i], comments.length));
-          }
+          comments.forEach(function (item, i) {
+            fragment.appendChild(createComment(template, comments[i], i));
+          });
+          insertionPoint.appendChild(fragment);
         }
-        insertionPoint.appendChild(fragment);
+      }
+    };
+
+    var setLoaderState = function () {
+      if (totalComments) {
+        var markup = totalComments.innerHTML;
+        markup = markup.replace(/\d*\sиз\s/, shownCommentsAmount + ' из ');
+        totalComments.innerHTML = markup;
+      }
+      if (formCommentsLoader) {
+        var needToHide = ((shownCommentsAmount < COMMENTS_PORTION_IN_MARKUP) || ((shownCommentsAmount) >= dataElement.comments.length));
+        formCommentsLoader.disabled = needToHide;
+        if (needToHide) {
+          window.general.addClassName(formCommentsLoader, 'hidden');
+        } else {
+          window.general.removeClassName(formCommentsLoader, 'hidden');
+        }
       }
     };
 
@@ -71,22 +110,17 @@
         window.dom.setAttributeBySelector(form, '.comments-count', 'textContent', dataElement.comments.length);
         window.dom.setAttributeBySelector(form, '.social__caption', 'textContent', dataElement.description);
         renderComments(form, dataElement.comments);
-
-        if (totalComments) {
-          var markup = totalComments.innerHTML;
-          markup = markup.replace(/\d*\sиз\s/, Math.min(dataElement.comments.length, COMMENTS_AMOUNT_IN_MARKUP) + ' из ');
-          totalComments.innerHTML = markup;
-        }
-
-        window.dom.addClassNameBySelector(form, '.social__comment-count', 'visually-hidden');
-        window.dom.addClassNameBySelector(form, '.comments-loader', 'visually-hidden');
+        setLoaderState();
       }
     };
 
-    var form = links.bigPhoto;
-    var formCancel = links.bigPhotoCancel;
     var pseudoTemplate = links.pseudoTemplate;
     var totalComments = links.totalComments;
+    var form = links.bigPhoto;
+    var formCancel = links.bigPhotoCancel;
+    var formComments = links.bigPhotoComments;
+    var formCommentsLoader = links.bigPhotoCommentsLoader;
+    var shownCommentsAmount = Math.min(dataElement.comments.length, COMMENTS_PORTION_IN_MARKUP);
     show(dataElement);
   };
 

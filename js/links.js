@@ -15,11 +15,14 @@
   var editingFormInputs = editingFormOverlay.querySelectorAll('input:enabled:not(.visually-hidden), textarea:enabled:not(.visually-hidden)');
   var bigPhoto = document.querySelector('.big-picture');
   var bigPhotoCancel = window.dom.getElementBySelector(bigPhoto, '#picture-cancel');
+  var bigPhotoComments = window.dom.getElementBySelector(bigPhoto, '.social__comments');
+  var bigPhotoCommentsLoader = window.dom.getElementBySelector(bigPhoto, '.comments-loader');
   var pseudoTemplate = document.querySelector('.social__comment').cloneNode(true);
   var totalComments = document.querySelector('.social__comment-count');
   var userPhotoTemplate = window.dom.getTemplateContent('#picture', '.picture');
   var errorMessageTemplate = window.dom.getTemplateContent('#error', '.error');
   var successMessageTemplate = window.dom.getTemplateContent('#success', '.success');
+  var filters = window.dom.getElementBySelector(main, '.img-filters');
 
   window.links = {
     form: editingForm,
@@ -35,11 +38,14 @@
     pictures: pictures,
     bigPhoto: bigPhoto,
     bigPhotoCancel: bigPhotoCancel,
+    bigPhotoComments: bigPhotoComments,
+    bigPhotoCommentsLoader: bigPhotoCommentsLoader,
     pseudoTemplate: pseudoTemplate,
     totalComments: totalComments,
     userPhotoTemplate: userPhotoTemplate,
     main: main,
     errorMessageTemplate: errorMessageTemplate,
-    successMessageTemplate: successMessageTemplate
+    successMessageTemplate: successMessageTemplate,
+    filters: filters
   };
 })();

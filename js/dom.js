@@ -40,6 +40,13 @@
       }
     },
 
+    removeClassNameBySelector: function (parentObj, selector, className) {
+      var obj = parentObj.querySelector(selector);
+      if (obj) {
+        window.general.removeClassName(obj, className);
+      }
+    },
+
     getElementBySelector: function (parentElement, selector) {
       if (parentElement) {
         return parentElement.querySelector(selector);
