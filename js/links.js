@@ -9,6 +9,7 @@
   var editingFormCancel = window.dom.getElementBySelector(editingFormOverlay, '#upload-cancel');
   var editingFormPin = window.dom.getElementBySelector(editingFormOverlay, '.effect-level__pin');
   var editingFormEffectContainer = window.dom.getElementBySelector(editingFormOverlay, '.img-upload__effect-level');
+  var editingFormEffectDefault = window.dom.getElementBySelector(editingFormOverlay, '#effect-none');
   var editingFormEffectLevel = window.dom.getElementBySelector(editingFormOverlay, '.effect-level__value');
   var editingFormEffectDepth = window.dom.getElementBySelector(editingFormOverlay, '.effect-level__depth');
   var editingFormImgPreview = window.dom.getElementBySelector(editingFormOverlay, '.img-upload__preview > img');
@@ -35,6 +36,7 @@
     formEffectContainer: editingFormEffectContainer,
     formEffectLevel: editingFormEffectLevel,
     formEffectDepth: editingFormEffectDepth,
+    formEffectDefault: editingFormEffectDefault,
     formImgPreview: editingFormImgPreview,
     formInputs: editingFormInputs,
     formScaleDecrease: editingFormScaleDecrease,

@@ -10,8 +10,8 @@
   var renderPhotos = function (dataArray) {
     var removePrevious = function (insertionPoint) {
       var oldPhotos = insertionPoint.querySelectorAll('.picture');
-      Array.prototype.slice.call(oldPhotos).forEach(function (el) {
-        insertionPoint.removeChild(el);
+      Array.prototype.slice.call(oldPhotos).forEach(function (element) {
+        insertionPoint.removeChild(element);
       });
     };
 
@@ -37,22 +37,22 @@
   };
 
   var onPicturesClick = function (evt) {
-    var el = evt.target;
-    if ((el.tagName !== 'IMG') && (el.tagName !== 'A')) {
+    var element = evt.target;
+    if ((element.tagName !== 'IMG') && (element.tagName !== 'A')) {
       return false;
     }
     evt.preventDefault();
-    while (el !== pictures) {
-      if (el.hasAttribute(PHOTO_KEY)) {
+    while (element !== pictures) {
+      if (element.hasAttribute(PHOTO_KEY)) {
         var index = photos.indexOf(photos.filter(function (item) {
-          return item.url === el.getAttribute(PHOTO_KEY);
+          return item.url === element.getAttribute(PHOTO_KEY);
         })[0]);
         if ((index >= 0) && (index < photos.length) && window.preview) {
           window.preview.showBigPhoto(photos[index], links);
         }
         return false;
       }
-      el = el.parentNode;
+      element = element.parentNode;
     }
     return false;
   };
@@ -66,12 +66,9 @@
 
   var checkModuleAddition = function () {
     var modules = ['common', 'general', 'dom', 'events', 'links'];
-    for (var i = 0; i < modules.length; i++) {
-      if (!window[modules[i]]) {
-        return false;
-      }
-    }
-    return true;
+    return !modules.some(function (item) {
+      return !window.hasOwnProperty(item);
+    });
   };
 
   var initMessages = function (templates, insertionPoint) {
@@ -143,9 +140,9 @@
     });
 
     var onFilterClick = function (evt) {
-      var el = evt.target;
-      if (el.tagName === 'BUTTON' && el.classList.contains('img-filters__button')) {
-        onFilterChange(el);
+      var element = evt.target;
+      if (element.tagName === 'BUTTON' && element.classList.contains('img-filters__button')) {
+        onFilterChange(element);
       }
     };
     showFilter();
@@ -155,8 +152,8 @@
     if (uploadFile && formImgPreview) {
       var file = uploadFile.files[0];
       var fileName = file.name.toLowerCase();
-      var matches = FILE_TYPES.some(function (it) {
-        return fileName.endsWith(it);
+      var matches = FILE_TYPES.some(function (item) {
+        return fileName.endsWith(item);
       });
       if (matches) {
         var reader = new FileReader();

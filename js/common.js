@@ -7,13 +7,13 @@
     return Math.floor(min + Math.random() * (max + 1 - min));
   };
 
-  var shuffleArray = function (arr) {
-    var array = arr.slice();
+  var shuffleArray = function (sourceArray) {
+    var array = sourceArray.slice();
     for (var i = array.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
-      var temp = array[i];
+      var temporaryValue = array[i];
       array[i] = array[j];
-      array[j] = temp;
+      array[j] = temporaryValue;
     }
     return array;
   };
@@ -29,12 +29,12 @@
   };
 
   window.common = {
-    getUniqueFromArray: function (arr) {
-      var obj = {};
-      arr.forEach(function (item) {
-        obj[item.toString()] = true;
+    getUniqueFromArray: function (sourceArray) {
+      var temporaryObject = {};
+      sourceArray.forEach(function (item) {
+        temporaryObject[item.toString()] = true;
       });
-      return Object.keys(obj).map(function (key) {
+      return Object.keys(temporaryObject).map(function (key) {
         return key;
       });
     },
@@ -57,14 +57,14 @@
       return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
     },
 
-    getRandomLimitedSetFromArray: function (arr, setLength) {
-      var reSortedArray = shuffleArray(arr);
+    getRandomLimitedSetFromArray: function (sourceArray, setLength) {
+      var reSortedArray = shuffleArray(sourceArray);
       reSortedArray.length = Math.min(setLength, reSortedArray.length);
       return reSortedArray;
     },
 
-    getPhotosByRank: function (arr) {
-      var reSortedArray = arr.slice().sort(function (firstItem, secondItem) {
+    getPhotosByRank: function (sourceArray) {
+      var reSortedArray = sourceArray.slice().sort(function (firstItem, secondItem) {
         var rank = (firstItem.comments && secondItem.comments) ? (secondItem.comments.length - firstItem.comments.length) : 0;
         if (rank === 0) {
           rank = (firstItem.likes && secondItem.likes) ? (parseInt(secondItem.likes, 10) - parseInt(firstItem.likes, 10)) : 0;
@@ -80,12 +80,12 @@
     debounce: function (action) {
       var lastTimeout = null;
       return function () {
-        var args = arguments;
+        var parameters = arguments;
         if (lastTimeout) {
           window.clearTimeout(lastTimeout);
         }
         lastTimeout = window.setTimeout(function () {
-          action.apply(null, args);
+          action.apply(null, parameters);
         }, DEBOUNCE_INTERVAL);
       };
     }

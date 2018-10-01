@@ -18,6 +18,7 @@
   var HASH_TAG_MAX_AMOUNT = 5;
   var DESCRIPTION_MAX_LENGTH = 140;
   var EFFECT_PREVIEW_PREFIX = 'effects__preview--';
+  var NEED_DEFAULT_STATE = true;
 
   var init = function (links, messages) {
 
@@ -25,7 +26,7 @@
       return EFFECT_PREVIEW_PREFIX + item;
     });
 
-    var getHashTagsValidationResults = function (arr) {
+    var getHashTagsValidationResults = function (sourceArr) {
       var singleTagRules = {
         'needStartHash': {errorMessage: 'хэш-тег должен начинаться с символа # (решётка)'},
         'notOnlyHash': {errorMessage: 'хеш-тег не может состоять только из одной решётки'},
@@ -38,7 +39,7 @@
       };
 
       var validationResult = [];
-      arr.forEach(function (item) {
+      sourceArr.forEach(function (item) {
         if (item[0] !== '#') {
           validationResult.push(singleTagRules['needStartHash'].errorMessage);
         }
@@ -54,11 +55,11 @@
         }
       });
 
-      if (arr.length > window.common.getUniqueFromArray(arr).length) {
+      if (sourceArr.length > window.common.getUniqueFromArray(sourceArr).length) {
         validationResult.push(commonTagRules['doubleDetected'].errorMessage);
       }
 
-      if (window.common.getUniqueFromArray(arr).length > HASH_TAG_MAX_AMOUNT) {
+      if (window.common.getUniqueFromArray(sourceArr).length > HASH_TAG_MAX_AMOUNT) {
         validationResult.push(commonTagRules['toManyTags'].errorMessage);
       }
 
@@ -69,20 +70,20 @@
       return validationResult ? 'none' : '0 2px 0 4px red';
     };
 
-    var validateHashInput = function (el) {
-      var hashTags = el.value.toLowerCase().split(' ').filter(function (item) {
+    var validateHashInput = function (element) {
+      var hashTags = element.value.toLowerCase().split(' ').filter(function (item) {
         return item !== '';
       });
       var validationResult = getHashTagsValidationResults(hashTags);
-      el.setCustomValidity((validationResult.length === 0) ? '' : validationResult.join(', '));
-      el.style.boxShadow = getValidationStyle(el.validity.valid);
+      element.setCustomValidity((validationResult.length === 0) ? '' : validationResult.join(', '));
+      element.style.boxShadow = getValidationStyle(element.validity.valid);
     };
 
-    var validateDescriptionInput = function (el) {
-      var validationResult = (el.validity.tooLong || (el.value.length > DESCRIPTION_MAX_LENGTH)) ?
+    var validateDescriptionInput = function (element) {
+      var validationResult = (element.validity.tooLong || (element.value.length > DESCRIPTION_MAX_LENGTH)) ?
         'длина комментария не может быть более ' + DESCRIPTION_MAX_LENGTH + ' символов' : '';
-      el.setCustomValidity(validationResult);
-      el.style.boxShadow = getValidationStyle(el.validity.valid);
+      element.setCustomValidity(validationResult);
+      element.style.boxShadow = getValidationStyle(element.validity.valid);
     };
 
     var getCustomValidationResult = function () {
@@ -110,6 +111,9 @@
 
     var show = function () {
       if (formOverlay) {
+        if (NEED_DEFAULT_STATE) {
+          setDefaultState();
+        }
         changeScaleValue();
         setFormInteractivity();
         window.general.removeClassName(formOverlay, 'hidden');
@@ -159,6 +163,14 @@
       switchFormInteractivity('removeEventListener', removeRangeInteractivity);
     };
 
+    var setDefaultState = function () {
+      if (formEffectDefault) {
+        formEffectDefault.checked = true;
+      }
+      setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
+      applyEffect(DEFAULT_EFFECT_NAME);
+    };
+
     var changeScaleValue = function () {
       if (formScaleValue) {
         formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : DEFAULT_SCALE_VALUE) + '%';
@@ -168,7 +180,7 @@
 
     var setStyleByScaleValue = function () {
       if (formScaleValue && formImgPreview) {
-        formImgPreview.style.transform = 'scale(' + parseInt(formScaleValue.value, 10) / 100 + ')';
+        formImgPreview.parentElement.style.transform = 'scale(' + parseInt(formScaleValue.value, 10) / 100 + ')';
       }
     };
 
@@ -181,20 +193,20 @@
     };
 
     var onFormChange = function (evt) {
-      var el = evt.target;
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-        switch (el.name) {
+      var element = evt.target;
+      if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+        switch (element.name) {
           case 'effect':
             setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
-            applyEffect(el.value);
+            applyEffect(element.value);
             changeEffectLevelStyles();
             setStyleByScaleValue();
             break;
           case 'hashtags':
-            validateHashInput(el);
+            validateHashInput(element);
             break;
           case 'description':
-            validateDescriptionInput(el);
+            validateDescriptionInput(element);
             break;
           default:
             break;
@@ -225,9 +237,9 @@
       }
     };
 
-    var getEffectLevelValue = function (elem) {
-      if (elem) {
-        return parseInt(elem.value, 10);
+    var getEffectLevelValue = function (element) {
+      if (element) {
+        return parseInt(element.value, 10);
       }
       return DEFAULT_EFFECT_LEVEL;
     };
@@ -268,8 +280,8 @@
       };
 
       if (formPin) {
-        var sliderX = window.dom.getXCoord(formPin.parentElement);
-        var pinX = window.dom.getXCoord(formPin);
+        var sliderX = window.dom.getXCoordinate(formPin.parentElement);
+        var pinX = window.dom.getXCoordinate(formPin);
         var shiftX = evt.pageX - pinX;
         evt.preventDefault();
         document.addEventListener('mouseup', onPinMouseUp);
@@ -330,6 +342,7 @@
     var formEffectContainer = links.formEffectContainer;
     var formEffectLevel = links.formEffectLevel;
     var formEffectDepth = links.formEffectDepth;
+    var formEffectDefault = links.formEffectDefault;
     var formImgPreview = links.formImgPreview;
     var formInputs = links.formInputs;
     var formScaleDecrease = links.formScaleDecrease;

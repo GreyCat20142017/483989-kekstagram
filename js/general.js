@@ -2,15 +2,15 @@
 
 (function () {
   window.general = {
-    removeClassName: function (obj, className) {
-      if (obj && obj.classList.contains(className)) {
-        obj.classList.remove(className);
+    removeClassName: function (element, className) {
+      if (element && element.classList.contains(className)) {
+        element.classList.remove(className);
       }
     },
 
-    addClassName: function (obj, className) {
-      if (obj && !obj.classList.contains(className)) {
-        obj.classList.add(className);
+    addClassName: function (element, className) {
+      if (element && !element.classList.contains(className)) {
+        element.classList.add(className);
       }
     }
   };

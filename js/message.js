@@ -27,36 +27,31 @@
       }
     };
 
-    var setMessageInteractivity = function () {
-      document.addEventListener('keydown', onDocumentKeyDown);
-      document.addEventListener('click', onDocumentClick);
+    var switchMessageInteractivity = function (action, additionalAction) {
+      document[action]('keydown', onDocumentKeyDown);
+      document[action]('click', onDocumentClick);
       if (messageLink) {
-        Array.prototype.slice.call(buttons).forEach(function (btn) {
-          btn.addEventListener('click', onButtonClick);
+        Array.prototype.slice.call(buttons).forEach(function (button) {
+          button[action]('click', onButtonClick);
           if (hiddenButtons) {
-            window.general.addClassName(btn, 'visually-hidden');
+            window.general[additionalAction](button, 'visually-hidden');
           }
         });
       }
+    };
+
+    var setMessageInteractivity = function () {
+      switchMessageInteractivity('addEventListener', 'addClassName');
     };
 
     var removeMessageInteractivity = function () {
-      document.removeEventListener('keydown', onDocumentKeyDown);
-      document.removeEventListener('click', onDocumentClick);
-      if (messageLink) {
-        Array.prototype.slice.call(buttons).forEach(function (btn) {
-          btn.removeEventListener('click', onButtonClick);
-          if (hiddenButtons) {
-            window.general.removeClassName(btn, 'visually-hidden');
-          }
-        });
-      }
+      switchMessageInteractivity('removeEventListener', 'addClassName');
     };
 
     var setMessageTitle = function (text) {
-      var msgTitle = window.dom.getElementBySelector(messageLink, 'h2');
-      if (msgTitle) {
-        msgTitle.textContent = text;
+      var messageText = window.dom.getElementBySelector(messageLink, 'h2');
+      if (messageText) {
+        messageText.textContent = text;
       }
     };
 
