@@ -8,10 +8,10 @@
     'phobos': {scaleMin: 0, scaleMax: 3, unit: 'px', filterName: 'blur'},
     'heat': {scaleMin: 1, scaleMax: 3, unit: '', filterName: 'brightness'}
   };
+  var CURRENT_EFFECT_SELECTOR = 'input[name="effect"]:checked';
   var DEFAULT_EFFECT_NAME = 'none';
   var DEFAULT_EFFECT_LEVEL = 100;
-  var CURRENT_EFFECT_SELECTOR = 'input[name="effect"]:checked';
-
+  var DEFAULT_SCALE_VALUE = 100;
   var NO_ESCAPE_NAMES = ['hashtags', 'description'];
   var HASH_TAG_MIN_LENGTH = 2;
   var HASH_TAG_MAX_LENGTH = 20;
@@ -70,7 +70,9 @@
     };
 
     var validateHashInput = function (el) {
-      var hashTags = el.value.toLowerCase().split(' ');
+      var hashTags = el.value.toLowerCase().split(' ').filter(function (item) {
+        return item !== '';
+      });
       var validationResult = getHashTagsValidationResults(hashTags);
       el.setCustomValidity((validationResult.length === 0) ? '' : validationResult.join(', '));
       el.style.boxShadow = getValidationStyle(el.validity.valid);
@@ -108,6 +110,7 @@
 
     var show = function () {
       if (formOverlay) {
+        changeScaleValue();
         setFormInteractivity();
         window.general.removeClassName(formOverlay, 'hidden');
         var currentEffect = formOverlay.querySelector(CURRENT_EFFECT_SELECTOR);
@@ -130,32 +133,51 @@
       return false;
     };
 
-    var setFormInteractivity = function () {
-      document.addEventListener('keydown', onDocumentKeyDown);
+    var switchFormInteractivity = function (action, pinInteractivity) {
+      document[action]('keydown', onDocumentKeyDown);
       if (form) {
-        form.addEventListener('submit', onSubmit);
-        form.addEventListener('change', onFormChange);
+        form[action]('submit', onSubmit);
+        form[action]('change', onFormChange);
         if (formCancel) {
-          formCancel.addEventListener('click', onCancelButtonClick);
+          formCancel[action]('click', onCancelButtonClick);
         }
         if (formPin) {
-          setRangeInteractivity();
+          pinInteractivity();
+        }
+        if (formZoomer && formScaleDecrease && formScaleIncrease && formScaleValue) {
+          formScaleDecrease[action]('click', onDecreaseClick);
+          formScaleIncrease[action]('click', onIncreaseClick);
         }
       }
     };
 
+    var setFormInteractivity = function () {
+      switchFormInteractivity('addEventListener', setRangeInteractivity);
+    };
+
     var removeFormInteractivity = function () {
-      document.removeEventListener('keydown', onDocumentKeyDown);
-      if (form) {
-        form.removeEventListener('submit', onSubmit);
-        form.removeEventListener('change', onFormChange);
-        if (formCancel) {
-          formCancel.removeEventListener('click', onCancelButtonClick);
-        }
-        if (formPin) {
-          removeRangeInteractivity();
-        }
+      switchFormInteractivity('removeEventListener', removeRangeInteractivity);
+    };
+
+    var changeScaleValue = function () {
+      if (formScaleValue) {
+        formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : DEFAULT_SCALE_VALUE) + '%';
+        setStyleByScaleValue();
       }
+    };
+
+    var setStyleByScaleValue = function () {
+      if (formScaleValue && formImgPreview) {
+        formImgPreview.style.transform = 'scale(' + parseInt(formScaleValue.value, 10) / 100 + ')';
+      }
+    };
+
+    var onDecreaseClick = function () {
+      changeScaleValue(formZoomer.decrease());
+    };
+
+    var onIncreaseClick = function () {
+      changeScaleValue(formZoomer.increase());
     };
 
     var onFormChange = function (evt) {
@@ -166,6 +188,7 @@
             setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
             applyEffect(el.value);
             changeEffectLevelStyles();
+            setStyleByScaleValue();
             break;
           case 'hashtags':
             validateHashInput(el);
@@ -192,8 +215,8 @@
     };
 
     var setStyleByEffectLevel = function (element, effect, level) {
-      element.style = 'filter: ' + getFilterText(effect, level) + '; ' +
-      '-webkit-filter: ' + getFilterText(effect, level) + '; ';
+      element.style['filter'] = getFilterText(effect, level);
+      element.style['-webkit-filter'] = getFilterText(effect, level);
     };
 
     var setEffectLevelValue = function (percent) {
@@ -259,7 +282,7 @@
     };
 
     var removeRangeInteractivity = function () {
-      formPin.addEventListener('mousedown', onPinMouseDown);
+      formPin.removeEventListener('mousedown', onPinMouseDown);
     };
 
     var applyEffect = function (effect) {
@@ -299,6 +322,7 @@
       }
     };
 
+    var uploadFile = links.uploadFile;
     var form = links.form;
     var formOverlay = links.formOverlay;
     var formCancel = links.formCancel;
@@ -308,7 +332,11 @@
     var formEffectDepth = links.formEffectDepth;
     var formImgPreview = links.formImgPreview;
     var formInputs = links.formInputs;
-    var uploadFile = links.uploadFile;
+    var formScaleDecrease = links.formScaleDecrease;
+    var formScaleIncrease = links.formScaleIncrease;
+    var formScaleValue = links.formScaleValue;
+    var formZoomer = (window.zoomer) ? (new window.zoomer.Zoomer(25, 100, 25, DEFAULT_SCALE_VALUE)) : null;
+
     show();
   };
 

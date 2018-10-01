@@ -5,6 +5,7 @@
   var RANDOM_PHOTO_AMOUNT = 10;
   var FILTERS = {popular: 'filter-popular', random: 'filter-new', discussed: 'filter-discussed'};
   var ACTIVE_FILTER_CLASS = 'img-filters__button--active';
+  var FILE_TYPES = ['jpg', 'jpeg', 'png'];
 
   var renderPhotos = function (dataArray) {
     var removePrevious = function (insertionPoint) {
@@ -37,7 +38,7 @@
 
   var onPicturesClick = function (evt) {
     var el = evt.target;
-    if (el.tagName !== 'IMG') {
+    if ((el.tagName !== 'IMG') && (el.tagName !== 'A')) {
       return false;
     }
     evt.preventDefault();
@@ -59,7 +60,7 @@
   var onUploadFileChange = function (evt) {
     evt.preventDefault();
     if (window.form) {
-      window.form.showEditingForm(links, messages);
+      loadPicture();
     }
   };
 
@@ -150,6 +151,24 @@
     showFilter();
   };
 
+  var loadPicture = function () {
+    if (uploadFile && formImgPreview) {
+      var file = uploadFile.files[0];
+      var fileName = file.name.toLowerCase();
+      var matches = FILE_TYPES.some(function (it) {
+        return fileName.endsWith(it);
+      });
+      if (matches) {
+        var reader = new FileReader();
+        reader.addEventListener('load', function () {
+          formImgPreview.src = reader.result;
+        });
+        reader.readAsDataURL(file);
+        window.form.showEditingForm(links, messages);
+      }
+    }
+  };
+
   var onGet = function (response) {
     photos = [];
     response.forEach(function (item) {
@@ -167,6 +186,7 @@
     var links = window.links;
     var pictures = links.pictures;
     var uploadFile = links.uploadFile;
+    var formImgPreview = links.formImgPreview;
     var userPhotoTemplate = links.userPhotoTemplate;
     var filters = links.filters;
     var messages = initMessages([links.errorMessageTemplate, links.successMessageTemplate], links.main);

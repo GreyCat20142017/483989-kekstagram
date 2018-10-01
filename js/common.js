@@ -89,6 +89,5 @@
         }, DEBOUNCE_INTERVAL);
       };
     }
-
   };
 })();
