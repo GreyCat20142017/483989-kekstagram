@@ -8,24 +8,28 @@
     'phobos': {scaleMin: 0, scaleMax: 3, unit: 'px', filterName: 'blur'},
     'heat': {scaleMin: 1, scaleMax: 3, unit: '', filterName: 'brightness'}
   };
+  var CURRENT_EFFECT_SELECTOR = 'input[name="effect"]:checked';
   var DEFAULT_EFFECT_NAME = 'none';
   var DEFAULT_EFFECT_LEVEL = 100;
-  var CURRENT_EFFECT_SELECTOR = 'input[name="effect"]:checked';
-
+  var ZOOM_DEFAULT_VALUE = 100;
+  var ZOOM_MIN = 25;
+  var ZOOM_MAX = 100;
+  var ZOOM_STEP = 25;
   var NO_ESCAPE_NAMES = ['hashtags', 'description'];
   var HASH_TAG_MIN_LENGTH = 2;
   var HASH_TAG_MAX_LENGTH = 20;
   var HASH_TAG_MAX_AMOUNT = 5;
   var DESCRIPTION_MAX_LENGTH = 140;
   var EFFECT_PREVIEW_PREFIX = 'effects__preview--';
+  var NEED_DEFAULT_STATE = true;
 
-  var init = function (links, messages) {
+  var initForm = function (links, messages) {
 
     var effectPreviewClasses = Object.keys(EFFECTS).map(function (item) {
       return EFFECT_PREVIEW_PREFIX + item;
     });
 
-    var getHashTagsValidationResults = function (arr) {
+    var getHashTagsValidationResults = function (items) {
       var singleTagRules = {
         'needStartHash': {errorMessage: 'хэш-тег должен начинаться с символа # (решётка)'},
         'notOnlyHash': {errorMessage: 'хеш-тег не может состоять только из одной решётки'},
@@ -38,7 +42,7 @@
       };
 
       var validationResult = [];
-      arr.forEach(function (item) {
+      items.forEach(function (item) {
         if (item[0] !== '#') {
           validationResult.push(singleTagRules['needStartHash'].errorMessage);
         }
@@ -54,11 +58,11 @@
         }
       });
 
-      if (arr.length > window.common.getUniqueFromArray(arr).length) {
+      if (items.length > window.common.getUniqueFromArray(items).length) {
         validationResult.push(commonTagRules['doubleDetected'].errorMessage);
       }
 
-      if (window.common.getUniqueFromArray(arr).length > HASH_TAG_MAX_AMOUNT) {
+      if (window.common.getUniqueFromArray(items).length > HASH_TAG_MAX_AMOUNT) {
         validationResult.push(commonTagRules['toManyTags'].errorMessage);
       }
 
@@ -69,18 +73,20 @@
       return validationResult ? 'none' : '0 2px 0 4px red';
     };
 
-    var validateHashInput = function (el) {
-      var hashTags = el.value.toLowerCase().split(' ');
+    var validateHashInput = function (element) {
+      var hashTags = element.value.toLowerCase().split(' ').filter(function (item) {
+        return item !== '';
+      });
       var validationResult = getHashTagsValidationResults(hashTags);
-      el.setCustomValidity((validationResult.length === 0) ? '' : validationResult.join(', '));
-      el.style.boxShadow = getValidationStyle(el.validity.valid);
+      element.setCustomValidity((validationResult.length === 0) ? '' : validationResult.join(', '));
+      element.style.boxShadow = getValidationStyle(element.validity.valid);
     };
 
-    var validateDescriptionInput = function (el) {
-      var validationResult = (el.validity.tooLong || (el.value.length > DESCRIPTION_MAX_LENGTH)) ?
+    var validateDescriptionInput = function (element) {
+      var validationResult = (element.validity.tooLong || (element.value.length > DESCRIPTION_MAX_LENGTH)) ?
         'длина комментария не может быть более ' + DESCRIPTION_MAX_LENGTH + ' символов' : '';
-      el.setCustomValidity(validationResult);
-      el.style.boxShadow = getValidationStyle(el.validity.valid);
+      element.setCustomValidity(validationResult);
+      element.style.boxShadow = getValidationStyle(element.validity.valid);
     };
 
     var getCustomValidationResult = function () {
@@ -99,15 +105,19 @@
     };
 
     var onCancelButtonClick = function (evt) {
-      window.events.isEvent(evt, hide);
+      window.events.isEvent(evt, hideForm);
     };
 
     var onDocumentKeyDown = function (evt) {
-      window.events.isEscEvent(evt, hide);
+      window.events.isEscEvent(evt, hideForm);
     };
 
-    var show = function () {
+    var showForm = function () {
       if (formOverlay) {
+        if (NEED_DEFAULT_STATE) {
+          setDefaultState();
+        }
+        changeScaleValue();
         setFormInteractivity();
         window.general.removeClassName(formOverlay, 'hidden');
         var currentEffect = formOverlay.querySelector(CURRENT_EFFECT_SELECTOR);
@@ -118,7 +128,7 @@
       }
     };
 
-    var hide = function () {
+    var hideForm = function () {
       if (formOverlay) {
         if (NO_ESCAPE_NAMES.indexOf(document.activeElement.name) !== -1) {
           return false;
@@ -130,48 +140,76 @@
       return false;
     };
 
-    var setFormInteractivity = function () {
-      document.addEventListener('keydown', onDocumentKeyDown);
+    var switchFormInteractivity = function (action, pinInteractivity) {
+      document[action]('keydown', onDocumentKeyDown);
       if (form) {
-        form.addEventListener('submit', onSubmit);
-        form.addEventListener('change', onFormChange);
+        form[action]('submit', onSubmit);
+        form[action]('change', onFormChange);
         if (formCancel) {
-          formCancel.addEventListener('click', onCancelButtonClick);
+          formCancel[action]('click', onCancelButtonClick);
         }
         if (formPin) {
-          setRangeInteractivity();
+          pinInteractivity();
+        }
+        if (formZoomer && formScaleDecrease && formScaleIncrease && formScaleValue) {
+          formScaleDecrease[action]('click', onDecreaseClick);
+          formScaleIncrease[action]('click', onIncreaseClick);
         }
       }
+    };
+
+    var setFormInteractivity = function () {
+      switchFormInteractivity('addEventListener', setRangeInteractivity);
     };
 
     var removeFormInteractivity = function () {
-      document.removeEventListener('keydown', onDocumentKeyDown);
-      if (form) {
-        form.removeEventListener('submit', onSubmit);
-        form.removeEventListener('change', onFormChange);
-        if (formCancel) {
-          formCancel.removeEventListener('click', onCancelButtonClick);
-        }
-        if (formPin) {
-          removeRangeInteractivity();
-        }
+      switchFormInteractivity('removeEventListener', removeRangeInteractivity);
+    };
+
+    var setDefaultState = function () {
+      if (formEffectDefault) {
+        formEffectDefault.checked = true;
+      }
+      setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
+      applyEffect(DEFAULT_EFFECT_NAME);
+    };
+
+    var changeScaleValue = function () {
+      if (formScaleValue) {
+        formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : ZOOM_DEFAULT_VALUE) + '%';
+        setStyleByScaleValue();
       }
     };
 
+    var setStyleByScaleValue = function () {
+      if (formScaleValue && formImgPreview) {
+        formImgPreview.parentElement.style.transform = 'scale(' + parseInt(formScaleValue.value, 10) / 100 + ')';
+      }
+    };
+
+    var onDecreaseClick = function () {
+      changeScaleValue(formZoomer.decrease());
+    };
+
+    var onIncreaseClick = function () {
+      changeScaleValue(formZoomer.increase());
+    };
+
     var onFormChange = function (evt) {
-      var el = evt.target;
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
-        switch (el.name) {
+      var element = evt.target;
+      if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+        switch (element.name) {
           case 'effect':
             setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
-            applyEffect(el.value);
+            applyEffect(element.value);
             changeEffectLevelStyles();
+            setStyleByScaleValue();
             break;
           case 'hashtags':
-            validateHashInput(el);
+            validateHashInput(element);
             break;
           case 'description':
-            validateDescriptionInput(el);
+            validateDescriptionInput(element);
             break;
           default:
             break;
@@ -192,8 +230,8 @@
     };
 
     var setStyleByEffectLevel = function (element, effect, level) {
-      element.style = 'filter: ' + getFilterText(effect, level) + '; ' +
-      '-webkit-filter: ' + getFilterText(effect, level) + '; ';
+      element.style['filter'] = getFilterText(effect, level);
+      element.style['-webkit-filter'] = getFilterText(effect, level);
     };
 
     var setEffectLevelValue = function (percent) {
@@ -202,9 +240,9 @@
       }
     };
 
-    var getEffectLevelValue = function (elem) {
-      if (elem) {
-        return parseInt(elem.value, 10);
+    var getEffectLevelValue = function (element) {
+      if (element) {
+        return parseInt(element.value, 10);
       }
       return DEFAULT_EFFECT_LEVEL;
     };
@@ -245,8 +283,8 @@
       };
 
       if (formPin) {
-        var sliderX = window.dom.getXCoord(formPin.parentElement);
-        var pinX = window.dom.getXCoord(formPin);
+        var sliderX = window.dom.getXCoordinate(formPin.parentElement);
+        var pinX = window.dom.getXCoordinate(formPin);
         var shiftX = evt.pageX - pinX;
         evt.preventDefault();
         document.addEventListener('mouseup', onPinMouseUp);
@@ -259,7 +297,7 @@
     };
 
     var removeRangeInteractivity = function () {
-      formPin.addEventListener('mousedown', onPinMouseDown);
+      formPin.removeEventListener('mousedown', onPinMouseDown);
     };
 
     var applyEffect = function (effect) {
@@ -279,14 +317,14 @@
       }
     };
 
-    var onPostError = function (errorMessage) {
-      hide();
-      window.message.init(messages.errorMessage, errorMessage);
+    var onPostDataError = function (errorMessage) {
+      hideForm();
+      window.message.initMessage(messages.errorMessage, errorMessage);
     };
 
-    var onPost = function () {
-      hide();
-      window.message.init(messages.successMessage);
+    var onPostData = function () {
+      hideForm();
+      window.message.initMessage(messages.successMessage);
     };
 
     var onSubmit = function (evt) {
@@ -294,11 +332,12 @@
       var validationResult = getCustomValidationResult();
       if (validationResult) {
         if (window.backend) {
-          window.backend.postData(new FormData(form), onPost, onPostError);
+          window.backend.postData(new FormData(form), onPostData, onPostDataError);
         }
       }
     };
 
+    var uploadFile = links.uploadFile;
     var form = links.form;
     var formOverlay = links.formOverlay;
     var formCancel = links.formCancel;
@@ -306,14 +345,19 @@
     var formEffectContainer = links.formEffectContainer;
     var formEffectLevel = links.formEffectLevel;
     var formEffectDepth = links.formEffectDepth;
+    var formEffectDefault = links.formEffectDefault;
     var formImgPreview = links.formImgPreview;
     var formInputs = links.formInputs;
-    var uploadFile = links.uploadFile;
-    show();
+    var formScaleDecrease = links.formScaleDecrease;
+    var formScaleIncrease = links.formScaleIncrease;
+    var formScaleValue = links.formScaleValue;
+    var formZoomer = (window.zoomer) ? (new window.zoomer.Zoomer(ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_DEFAULT_VALUE)) : null;
+
+    showForm();
   };
 
   window.form = {
-    showEditingForm: init
+    initEditingForm: initForm
   };
 
 })();

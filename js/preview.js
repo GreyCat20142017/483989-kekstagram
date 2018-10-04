@@ -3,30 +3,47 @@
 (function () {
   var COMMENTS_PORTION_IN_MARKUP = 5;
 
-  var init = function (dataElement, links) {
+  var initBigPhoto = function (dataRecord, links) {
 
-    var hide = function () {
+    var hideBigPhoto = function () {
       if (form) {
         removeFormInteractivity();
         window.general.addClassName(form, 'hidden');
       }
     };
 
-    var show = function () {
+    var showBigPhoto = function () {
       if (form) {
         setFormInteractivity();
-        renderForm(dataElement);
+        renderForm(dataRecord);
         window.general.removeClassName(form, 'hidden');
       }
     };
 
     var loadMore = function () {
-      var nextStage = shownCommentsAmount + Math.min(dataElement.comments.length - shownCommentsAmount, COMMENTS_PORTION_IN_MARKUP);
+      var nextStage = shownCommentsAmount + Math.min(dataRecord.comments.length - shownCommentsAmount, COMMENTS_PORTION_IN_MARKUP);
       for (var i = shownCommentsAmount; i < nextStage; i++) {
         window.general.removeClassName(formComments.childNodes[i], 'visually-hidden');
       }
       shownCommentsAmount = nextStage;
-      setLoaderState();
+      setCommentsState();
+    };
+
+    var setCommentsState = function () {
+      if (totalComments) {
+        var markup = totalComments.innerHTML;
+        markup = markup.replace(/\d*\sиз\s/, shownCommentsAmount + ' из ');
+        totalComments.innerHTML = markup;
+      }
+      if (formCommentsLoader) {
+        var needToHide = ((shownCommentsAmount < COMMENTS_PORTION_IN_MARKUP) || ((shownCommentsAmount) >= dataRecord.comments.length));
+        formCommentsLoader.disabled = needToHide;
+        if (needToHide) {
+          window.general.addClassName(formCommentsLoader, 'hidden');
+        } else {
+          window.general.removeClassName(formCommentsLoader, 'hidden');
+        }
+      }
     };
 
     var onLoaderClick = function (evt) {
@@ -34,31 +51,29 @@
     };
 
     var onCancelButtonClick = function (evt) {
-      window.events.isEvent(evt, hide);
+      window.events.isEvent(evt, hideBigPhoto);
     };
 
     var onDocumentKeyDown = function (evt) {
-      window.events.isEscEvent(evt, hide);
+      window.events.isEscEvent(evt, hideBigPhoto);
+    };
+
+    var switchFormInteractivity = function (action) {
+      document[action]('keydown', onDocumentKeyDown);
+      if (formCancel) {
+        formCancel[action]('click', onCancelButtonClick);
+      }
+      if (formCommentsLoader) {
+        formCommentsLoader[action]('click', onLoaderClick);
+      }
     };
 
     var setFormInteractivity = function () {
-      document.addEventListener('keydown', onDocumentKeyDown);
-      if (formCancel) {
-        formCancel.addEventListener('click', onCancelButtonClick);
-      }
-      if (formCommentsLoader) {
-        formCommentsLoader.addEventListener('click', onLoaderClick);
-      }
+      switchFormInteractivity('addEventListener');
     };
 
     var removeFormInteractivity = function () {
-      document.removeEventListener('keydown', onDocumentKeyDown);
-      if (formCancel) {
-        formCancel.removeEventListener('click', onCancelButtonClick);
-      }
-      if (formCommentsLoader) {
-        formCommentsLoader.removeEventListener('click', onLoaderClick);
-      }
+      switchFormInteractivity('removeEventListener');
     };
 
     var renderComments = function (parent, comments) {
@@ -86,31 +101,14 @@
       }
     };
 
-    var setLoaderState = function () {
-      if (totalComments) {
-        var markup = totalComments.innerHTML;
-        markup = markup.replace(/\d*\sиз\s/, shownCommentsAmount + ' из ');
-        totalComments.innerHTML = markup;
-      }
-      if (formCommentsLoader) {
-        var needToHide = ((shownCommentsAmount < COMMENTS_PORTION_IN_MARKUP) || ((shownCommentsAmount) >= dataElement.comments.length));
-        formCommentsLoader.disabled = needToHide;
-        if (needToHide) {
-          window.general.addClassName(formCommentsLoader, 'hidden');
-        } else {
-          window.general.removeClassName(formCommentsLoader, 'hidden');
-        }
-      }
-    };
-
     var renderForm = function () {
       if (form) {
-        window.dom.setAttributeBySelector(form, '.big-picture__img > img', 'src', dataElement.url);
-        window.dom.setAttributeBySelector(form, '.likes-count', 'textContent', dataElement.likes);
-        window.dom.setAttributeBySelector(form, '.comments-count', 'textContent', dataElement.comments.length);
-        window.dom.setAttributeBySelector(form, '.social__caption', 'textContent', dataElement.description);
-        renderComments(form, dataElement.comments);
-        setLoaderState();
+        window.dom.setAttributeBySelector(form, '.big-picture__img > img', 'src', dataRecord.url);
+        window.dom.setAttributeBySelector(form, '.likes-count', 'textContent', dataRecord.likes);
+        window.dom.setAttributeBySelector(form, '.comments-count', 'textContent', dataRecord.comments.length);
+        window.dom.setAttributeBySelector(form, '.social__caption', 'textContent', dataRecord.description);
+        renderComments(form, dataRecord.comments);
+        setCommentsState();
       }
     };
 
@@ -120,12 +118,12 @@
     var formCancel = links.bigPhotoCancel;
     var formComments = links.bigPhotoComments;
     var formCommentsLoader = links.bigPhotoCommentsLoader;
-    var shownCommentsAmount = Math.min(dataElement.comments.length, COMMENTS_PORTION_IN_MARKUP);
-    show(dataElement);
+    var shownCommentsAmount = Math.min(dataRecord.comments.length, COMMENTS_PORTION_IN_MARKUP);
+    showBigPhoto(dataRecord);
   };
 
   window.preview = {
-    showBigPhoto: init
+    initBigPhoto: initBigPhoto
   };
 
 })();

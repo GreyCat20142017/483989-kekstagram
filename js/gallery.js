@@ -5,21 +5,23 @@
   var RANDOM_PHOTO_AMOUNT = 10;
   var FILTERS = {popular: 'filter-popular', random: 'filter-new', discussed: 'filter-discussed'};
   var ACTIVE_FILTER_CLASS = 'img-filters__button--active';
+  var FILE_TYPES = ['jpg', 'jpeg', 'png'];
+  var MODULES = ['common', 'general', 'dom', 'events', 'links'];
 
-  var renderPhotos = function (dataArray) {
+  var renderPhotos = function (dataRecords) {
     var removePrevious = function (insertionPoint) {
       var oldPhotos = insertionPoint.querySelectorAll('.picture');
-      Array.prototype.slice.call(oldPhotos).forEach(function (el) {
-        insertionPoint.removeChild(el);
+      Array.prototype.slice.call(oldPhotos).forEach(function (element) {
+        insertionPoint.removeChild(element);
       });
     };
 
-    var createPhoto = function (template, dataElement) {
+    var createPhoto = function (template, dataRecord) {
       var element = template.cloneNode(true);
-      window.dom.setAttributeBySelector(element, '.picture__img', 'src', dataElement.url);
-      window.dom.setAttributeBySelector(element, '.picture__likes', 'textContent', dataElement.likes);
-      window.dom.setAttributeBySelector(element, '.picture__comments', 'textContent', dataElement.comments.length);
-      element.setAttribute(PHOTO_KEY, dataElement.url);
+      window.dom.setAttributeBySelector(element, '.picture__img', 'src', dataRecord.url);
+      window.dom.setAttributeBySelector(element, '.picture__likes', 'textContent', dataRecord.likes);
+      window.dom.setAttributeBySelector(element, '.picture__comments', 'textContent', dataRecord.comments.length);
+      element.setAttribute(PHOTO_KEY, dataRecord.url);
       return element;
     };
 
@@ -27,7 +29,7 @@
     var insertionPoint = pictures;
     if (template && insertionPoint) {
       var fragment = document.createDocumentFragment();
-      dataArray.forEach(function (item) {
+      dataRecords.forEach(function (item) {
         fragment.appendChild(createPhoto(template, item));
       });
       removePrevious(insertionPoint);
@@ -36,22 +38,22 @@
   };
 
   var onPicturesClick = function (evt) {
-    var el = evt.target;
-    if (el.tagName !== 'IMG') {
+    var element = evt.target;
+    if ((element.tagName !== 'IMG') && (element.tagName !== 'A')) {
       return false;
     }
     evt.preventDefault();
-    while (el !== pictures) {
-      if (el.hasAttribute(PHOTO_KEY)) {
+    while (element !== pictures) {
+      if (element.hasAttribute(PHOTO_KEY)) {
         var index = photos.indexOf(photos.filter(function (item) {
-          return item.url === el.getAttribute(PHOTO_KEY);
+          return item.url === element.getAttribute(PHOTO_KEY);
         })[0]);
         if ((index >= 0) && (index < photos.length) && window.preview) {
-          window.preview.showBigPhoto(photos[index], links);
+          window.preview.initBigPhoto(photos[index], links);
         }
         return false;
       }
-      el = el.parentNode;
+      element = element.parentNode;
     }
     return false;
   };
@@ -59,18 +61,14 @@
   var onUploadFileChange = function (evt) {
     evt.preventDefault();
     if (window.form) {
-      window.form.showEditingForm(links, messages);
+      loadPicture();
     }
   };
 
   var checkModuleAddition = function () {
-    var modules = ['common', 'general', 'dom', 'events', 'links'];
-    for (var i = 0; i < modules.length; i++) {
-      if (!window[modules[i]]) {
-        return false;
-      }
-    }
-    return true;
+    return !MODULES.some(function (item) {
+      return !window.hasOwnProperty(item);
+    });
   };
 
   var initMessages = function (templates, insertionPoint) {
@@ -88,7 +86,7 @@
 
   var initGallery = function () {
     if (window.backend) {
-      window.backend.getData(onGet, onGetError);
+      window.backend.getData(onGetData, onGetDataError);
     }
     if (uploadFile && links.formOverlay && links.formCancel) {
       uploadFile.addEventListener('change', onUploadFileChange);
@@ -142,15 +140,33 @@
     });
 
     var onFilterClick = function (evt) {
-      var el = evt.target;
-      if (el.tagName === 'BUTTON' && el.classList.contains('img-filters__button')) {
-        onFilterChange(el);
+      var element = evt.target;
+      if (element.tagName === 'BUTTON' && element.classList.contains('img-filters__button')) {
+        onFilterChange(element);
       }
     };
     showFilter();
   };
 
-  var onGet = function (response) {
+  var loadPicture = function () {
+    if (uploadFile && formImgPreview) {
+      var file = uploadFile.files[0];
+      var fileName = file.name.toLowerCase();
+      var matches = FILE_TYPES.some(function (item) {
+        return fileName.endsWith(item);
+      });
+      if (matches) {
+        var reader = new FileReader();
+        reader.addEventListener('load', function () {
+          formImgPreview.src = reader.result;
+        });
+        reader.readAsDataURL(file);
+        window.form.initEditingForm(links, messages);
+      }
+    }
+  };
+
+  var onGetData = function (response) {
     photos = [];
     response.forEach(function (item) {
       photos.push(item);
@@ -159,14 +175,15 @@
     renderPhotosByFilter(FILTERS.popular);
   };
 
-  var onGetError = function (errorMessage) {
-    window.message.init(messages.errorMessage, errorMessage, true);
+  var onGetDataError = function (errorMessage) {
+    window.message.initMessage(messages.errorMessage, errorMessage, true);
   };
 
   if (checkModuleAddition()) {
     var links = window.links;
     var pictures = links.pictures;
     var uploadFile = links.uploadFile;
+    var formImgPreview = links.formImgPreview;
     var userPhotoTemplate = links.userPhotoTemplate;
     var filters = links.filters;
     var messages = initMessages([links.errorMessageTemplate, links.successMessageTemplate], links.main);

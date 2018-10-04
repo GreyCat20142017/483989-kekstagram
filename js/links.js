@@ -9,10 +9,14 @@
   var editingFormCancel = window.dom.getElementBySelector(editingFormOverlay, '#upload-cancel');
   var editingFormPin = window.dom.getElementBySelector(editingFormOverlay, '.effect-level__pin');
   var editingFormEffectContainer = window.dom.getElementBySelector(editingFormOverlay, '.img-upload__effect-level');
+  var editingFormEffectDefault = window.dom.getElementBySelector(editingFormOverlay, '#effect-none');
   var editingFormEffectLevel = window.dom.getElementBySelector(editingFormOverlay, '.effect-level__value');
   var editingFormEffectDepth = window.dom.getElementBySelector(editingFormOverlay, '.effect-level__depth');
   var editingFormImgPreview = window.dom.getElementBySelector(editingFormOverlay, '.img-upload__preview > img');
   var editingFormInputs = editingFormOverlay.querySelectorAll('input:enabled:not(.visually-hidden), textarea:enabled:not(.visually-hidden)');
+  var editingFormScaleDecrease = window.dom.getElementBySelector(editingFormOverlay, '.scale__control--smaller');
+  var editingFormScaleIncrease = window.dom.getElementBySelector(editingFormOverlay, '.scale__control--bigger');
+  var editingFormScaleValue = window.dom.getElementBySelector(editingFormOverlay, '.scale__control--value');
   var bigPhoto = document.querySelector('.big-picture');
   var bigPhotoCancel = window.dom.getElementBySelector(bigPhoto, '#picture-cancel');
   var bigPhotoComments = window.dom.getElementBySelector(bigPhoto, '.social__comments');
@@ -32,8 +36,12 @@
     formEffectContainer: editingFormEffectContainer,
     formEffectLevel: editingFormEffectLevel,
     formEffectDepth: editingFormEffectDepth,
+    formEffectDefault: editingFormEffectDefault,
     formImgPreview: editingFormImgPreview,
     formInputs: editingFormInputs,
+    formScaleDecrease: editingFormScaleDecrease,
+    formScaleIncrease: editingFormScaleIncrease,
+    formScaleValue: editingFormScaleValue,
     uploadFile: uploadFile,
     pictures: pictures,
     bigPhoto: bigPhoto,
