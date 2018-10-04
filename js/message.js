@@ -1,29 +1,29 @@
 'use strict';
 
 (function () {
-  var init = function (messageLink, messageTitle, hiddenButtons) {
+  var initMessage = function (messageLink, messageTitle, hiddenButtons) {
 
-    var show = function () {
+    var showMessage = function () {
       setMessageInteractivity();
       window.general.removeClassName(messageLink, 'visually-hidden');
     };
 
-    var hide = function () {
+    var hideMessage = function () {
       removeMessageInteractivity();
       window.general.addClassName(messageLink, 'visually-hidden');
     };
 
     var onButtonClick = function (evt) {
-      window.events.isEvent(evt, hide);
+      window.events.isEvent(evt, hideMessage);
     };
 
     var onDocumentKeyDown = function (evt) {
-      window.events.isEscEvent(evt, hide);
+      window.events.isEscEvent(evt, hideMessage);
     };
 
     var onDocumentClick = function (evt) {
       if (!messageLink.children[0].contains(evt.target)) {
-        window.events.isEvent(evt, hide);
+        window.events.isEvent(evt, hideMessage);
       }
     };
 
@@ -59,10 +59,10 @@
     if (messageTitle) {
       setMessageTitle(messageTitle);
     }
-    show();
+    showMessage();
   };
 
   window.message = {
-    init: init
+    initMessage: initMessage
   };
 })();

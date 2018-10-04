@@ -3,19 +3,19 @@
 (function () {
   window.dom = {
     getXCoordinate: function (element) {
-      return element.getBoundingClientRect().x;
+      return element.getBoundingClientRect().left;
     },
 
-    setAttributeBySelector: function (parentElement, selector, attribute, value) {
-      var descendantElement = parentElement.querySelector(selector);
-      if (descendantElement) {
-        descendantElement[attribute] = value;
+    setAttributeBySelector: function (parentObject, selector, attribute, value) {
+      var descendantObject = parentObject.querySelector(selector);
+      if (descendantObject) {
+        descendantObject[attribute] = value;
       }
     },
 
     removeAlternatives: function (element, classSet) {
-      classSet.forEach(function (item) {
-        window.general.removeClassName(element, item);
+      classSet.forEach(function (classItem) {
+        window.general.removeClassName(element, classItem);
       });
     },
 
@@ -27,29 +27,29 @@
       return false;
     },
 
-    removeChildren: function (parentElement) {
-      while (parentElement.lastChild) {
-        parentElement.removeChild(parentElement.lastChild);
+    removeChildren: function (parentObject) {
+      while (parentObject.lastChild) {
+        parentObject.removeChild(parentObject.lastChild);
       }
     },
 
-    addClassNameBySelector: function (parentElement, selector, className) {
-      var descendantElement = parentElement.querySelector(selector);
-      if (descendantElement) {
-        window.general.addClassName(descendantElement, className);
+    addClassNameBySelector: function (parentObject, selector, className) {
+      var descendantObject = parentObject.querySelector(selector);
+      if (descendantObject) {
+        window.general.addClassName(descendantObject, className);
       }
     },
 
-    removeClassNameBySelector: function (parentElement, selector, className) {
-      var descendantElement = parentElement.querySelector(selector);
-      if (descendantElement) {
-        window.general.removeClassName(descendantElement, className);
+    removeClassNameBySelector: function (parentObject, selector, className) {
+      var descendantObject = parentObject.querySelector(selector);
+      if (descendantObject) {
+        window.general.removeClassName(descendantObject, className);
       }
     },
 
-    getElementBySelector: function (parentElement, selector) {
-      if (parentElement) {
-        return parentElement.querySelector(selector);
+    getElementBySelector: function (parentObject, selector) {
+      if (parentObject) {
+        return parentObject.querySelector(selector);
       }
       return false;
     }

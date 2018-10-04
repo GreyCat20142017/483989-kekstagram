@@ -6,8 +6,9 @@
   var FILTERS = {popular: 'filter-popular', random: 'filter-new', discussed: 'filter-discussed'};
   var ACTIVE_FILTER_CLASS = 'img-filters__button--active';
   var FILE_TYPES = ['jpg', 'jpeg', 'png'];
+  var MODULES = ['common', 'general', 'dom', 'events', 'links'];
 
-  var renderPhotos = function (dataArray) {
+  var renderPhotos = function (dataRecords) {
     var removePrevious = function (insertionPoint) {
       var oldPhotos = insertionPoint.querySelectorAll('.picture');
       Array.prototype.slice.call(oldPhotos).forEach(function (element) {
@@ -15,12 +16,12 @@
       });
     };
 
-    var createPhoto = function (template, dataElement) {
+    var createPhoto = function (template, dataRecord) {
       var element = template.cloneNode(true);
-      window.dom.setAttributeBySelector(element, '.picture__img', 'src', dataElement.url);
-      window.dom.setAttributeBySelector(element, '.picture__likes', 'textContent', dataElement.likes);
-      window.dom.setAttributeBySelector(element, '.picture__comments', 'textContent', dataElement.comments.length);
-      element.setAttribute(PHOTO_KEY, dataElement.url);
+      window.dom.setAttributeBySelector(element, '.picture__img', 'src', dataRecord.url);
+      window.dom.setAttributeBySelector(element, '.picture__likes', 'textContent', dataRecord.likes);
+      window.dom.setAttributeBySelector(element, '.picture__comments', 'textContent', dataRecord.comments.length);
+      element.setAttribute(PHOTO_KEY, dataRecord.url);
       return element;
     };
 
@@ -28,7 +29,7 @@
     var insertionPoint = pictures;
     if (template && insertionPoint) {
       var fragment = document.createDocumentFragment();
-      dataArray.forEach(function (item) {
+      dataRecords.forEach(function (item) {
         fragment.appendChild(createPhoto(template, item));
       });
       removePrevious(insertionPoint);
@@ -48,7 +49,7 @@
           return item.url === element.getAttribute(PHOTO_KEY);
         })[0]);
         if ((index >= 0) && (index < photos.length) && window.preview) {
-          window.preview.showBigPhoto(photos[index], links);
+          window.preview.initBigPhoto(photos[index], links);
         }
         return false;
       }
@@ -65,8 +66,7 @@
   };
 
   var checkModuleAddition = function () {
-    var modules = ['common', 'general', 'dom', 'events', 'links'];
-    return !modules.some(function (item) {
+    return !MODULES.some(function (item) {
       return !window.hasOwnProperty(item);
     });
   };
@@ -86,7 +86,7 @@
 
   var initGallery = function () {
     if (window.backend) {
-      window.backend.getData(onGet, onGetError);
+      window.backend.getData(onGetData, onGetDataError);
     }
     if (uploadFile && links.formOverlay && links.formCancel) {
       uploadFile.addEventListener('change', onUploadFileChange);
@@ -161,12 +161,12 @@
           formImgPreview.src = reader.result;
         });
         reader.readAsDataURL(file);
-        window.form.showEditingForm(links, messages);
+        window.form.initEditingForm(links, messages);
       }
     }
   };
 
-  var onGet = function (response) {
+  var onGetData = function (response) {
     photos = [];
     response.forEach(function (item) {
       photos.push(item);
@@ -175,8 +175,8 @@
     renderPhotosByFilter(FILTERS.popular);
   };
 
-  var onGetError = function (errorMessage) {
-    window.message.init(messages.errorMessage, errorMessage, true);
+  var onGetDataError = function (errorMessage) {
+    window.message.initMessage(messages.errorMessage, errorMessage, true);
   };
 
   if (checkModuleAddition()) {

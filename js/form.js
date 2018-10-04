@@ -11,7 +11,10 @@
   var CURRENT_EFFECT_SELECTOR = 'input[name="effect"]:checked';
   var DEFAULT_EFFECT_NAME = 'none';
   var DEFAULT_EFFECT_LEVEL = 100;
-  var DEFAULT_SCALE_VALUE = 100;
+  var ZOOM_DEFAULT_VALUE = 100;
+  var ZOOM_MIN = 25;
+  var ZOOM_MAX = 100;
+  var ZOOM_STEP = 25;
   var NO_ESCAPE_NAMES = ['hashtags', 'description'];
   var HASH_TAG_MIN_LENGTH = 2;
   var HASH_TAG_MAX_LENGTH = 20;
@@ -20,13 +23,13 @@
   var EFFECT_PREVIEW_PREFIX = 'effects__preview--';
   var NEED_DEFAULT_STATE = true;
 
-  var init = function (links, messages) {
+  var initForm = function (links, messages) {
 
     var effectPreviewClasses = Object.keys(EFFECTS).map(function (item) {
       return EFFECT_PREVIEW_PREFIX + item;
     });
 
-    var getHashTagsValidationResults = function (sourceArr) {
+    var getHashTagsValidationResults = function (items) {
       var singleTagRules = {
         'needStartHash': {errorMessage: 'хэш-тег должен начинаться с символа # (решётка)'},
         'notOnlyHash': {errorMessage: 'хеш-тег не может состоять только из одной решётки'},
@@ -39,7 +42,7 @@
       };
 
       var validationResult = [];
-      sourceArr.forEach(function (item) {
+      items.forEach(function (item) {
         if (item[0] !== '#') {
           validationResult.push(singleTagRules['needStartHash'].errorMessage);
         }
@@ -55,11 +58,11 @@
         }
       });
 
-      if (sourceArr.length > window.common.getUniqueFromArray(sourceArr).length) {
+      if (items.length > window.common.getUniqueFromArray(items).length) {
         validationResult.push(commonTagRules['doubleDetected'].errorMessage);
       }
 
-      if (window.common.getUniqueFromArray(sourceArr).length > HASH_TAG_MAX_AMOUNT) {
+      if (window.common.getUniqueFromArray(items).length > HASH_TAG_MAX_AMOUNT) {
         validationResult.push(commonTagRules['toManyTags'].errorMessage);
       }
 
@@ -102,14 +105,14 @@
     };
 
     var onCancelButtonClick = function (evt) {
-      window.events.isEvent(evt, hide);
+      window.events.isEvent(evt, hideForm);
     };
 
     var onDocumentKeyDown = function (evt) {
-      window.events.isEscEvent(evt, hide);
+      window.events.isEscEvent(evt, hideForm);
     };
 
-    var show = function () {
+    var showForm = function () {
       if (formOverlay) {
         if (NEED_DEFAULT_STATE) {
           setDefaultState();
@@ -125,7 +128,7 @@
       }
     };
 
-    var hide = function () {
+    var hideForm = function () {
       if (formOverlay) {
         if (NO_ESCAPE_NAMES.indexOf(document.activeElement.name) !== -1) {
           return false;
@@ -173,7 +176,7 @@
 
     var changeScaleValue = function () {
       if (formScaleValue) {
-        formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : DEFAULT_SCALE_VALUE) + '%';
+        formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : ZOOM_DEFAULT_VALUE) + '%';
         setStyleByScaleValue();
       }
     };
@@ -314,14 +317,14 @@
       }
     };
 
-    var onPostError = function (errorMessage) {
-      hide();
-      window.message.init(messages.errorMessage, errorMessage);
+    var onPostDataError = function (errorMessage) {
+      hideForm();
+      window.message.initMessage(messages.errorMessage, errorMessage);
     };
 
-    var onPost = function () {
-      hide();
-      window.message.init(messages.successMessage);
+    var onPostData = function () {
+      hideForm();
+      window.message.initMessage(messages.successMessage);
     };
 
     var onSubmit = function (evt) {
@@ -329,7 +332,7 @@
       var validationResult = getCustomValidationResult();
       if (validationResult) {
         if (window.backend) {
-          window.backend.postData(new FormData(form), onPost, onPostError);
+          window.backend.postData(new FormData(form), onPostData, onPostDataError);
         }
       }
     };
@@ -348,13 +351,13 @@
     var formScaleDecrease = links.formScaleDecrease;
     var formScaleIncrease = links.formScaleIncrease;
     var formScaleValue = links.formScaleValue;
-    var formZoomer = (window.zoomer) ? (new window.zoomer.Zoomer(25, 100, 25, DEFAULT_SCALE_VALUE)) : null;
+    var formZoomer = (window.zoomer) ? (new window.zoomer.Zoomer(ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_DEFAULT_VALUE)) : null;
 
-    show();
+    showForm();
   };
 
   window.form = {
-    showEditingForm: init
+    initEditingForm: initForm
   };
 
 })();

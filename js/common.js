@@ -7,15 +7,15 @@
     return Math.floor(min + Math.random() * (max + 1 - min));
   };
 
-  var shuffleArray = function (sourceArray) {
-    var array = sourceArray.slice();
-    for (var i = array.length - 1; i > 0; i--) {
+  var shuffleArray = function (entities) {
+    var sortableEntities = entities.slice();
+    for (var i = sortableEntities.length - 1; i > 0; i--) {
       var j = Math.floor(Math.random() * (i + 1));
-      var temporaryValue = array[i];
-      array[i] = array[j];
-      array[j] = temporaryValue;
+      var temporaryValue = sortableEntities[i];
+      sortableEntities[i] = sortableEntities[j];
+      sortableEntities[j] = temporaryValue;
     }
-    return array;
+    return sortableEntities;
   };
 
   var getStringCompareResult = function (left, right) {
@@ -29,9 +29,9 @@
   };
 
   window.common = {
-    getUniqueFromArray: function (sourceArray) {
+    getUniqueFromArray: function (entities) {
       var temporaryObject = {};
-      sourceArray.forEach(function (item) {
+      entities.forEach(function (item) {
         temporaryObject[item.toString()] = true;
       });
       return Object.keys(temporaryObject).map(function (key) {
@@ -57,14 +57,14 @@
       return 'img/avatar-' + getRandomFromRange(1, 6) + '.svg';
     },
 
-    getRandomLimitedSetFromArray: function (sourceArray, setLength) {
-      var reSortedArray = shuffleArray(sourceArray);
-      reSortedArray.length = Math.min(setLength, reSortedArray.length);
-      return reSortedArray;
+    getRandomLimitedSetFromArray: function (entities, setLength) {
+      var reSortedEntities = shuffleArray(entities);
+      reSortedEntities.length = Math.min(setLength, reSortedEntities.length);
+      return reSortedEntities;
     },
 
-    getPhotosByRank: function (sourceArray) {
-      var reSortedArray = sourceArray.slice().sort(function (firstItem, secondItem) {
+    getPhotosByRank: function (entities) {
+      var reSortedEntities = entities.slice().sort(function (firstItem, secondItem) {
         var rank = (firstItem.comments && secondItem.comments) ? (secondItem.comments.length - firstItem.comments.length) : 0;
         if (rank === 0) {
           rank = (firstItem.likes && secondItem.likes) ? (parseInt(secondItem.likes, 10) - parseInt(firstItem.likes, 10)) : 0;
@@ -74,7 +74,7 @@
         }
         return rank;
       });
-      return reSortedArray;
+      return reSortedEntities;
     },
 
     debounce: function (action) {
