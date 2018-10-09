@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+
   var URL_GET = 'https://js.dump.academy/kekstagram/data';
   var URL_POST = 'https://js.dump.academy/kekstagram';
   var RESPONSE_TYPE = 'json';

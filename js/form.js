@@ -15,6 +15,7 @@
   var ZOOM_MIN = 25;
   var ZOOM_MAX = 100;
   var ZOOM_STEP = 25;
+  var PIN_KEYBOARD_STEP = 5;
   var NO_ESCAPE_NAMES = ['hashtags', 'description'];
   var HASH_TAG_MIN_LENGTH = 2;
   var HASH_TAG_MAX_LENGTH = 20;
@@ -22,12 +23,11 @@
   var DESCRIPTION_MAX_LENGTH = 140;
   var EFFECT_PREVIEW_PREFIX = 'effects__preview--';
   var NEED_DEFAULT_STATE = true;
+  var effectPreviewClasses = Object.keys(EFFECTS).map(function (item) {
+    return EFFECT_PREVIEW_PREFIX + item;
+  });
 
-  var initForm = function (links, messages) {
-
-    var effectPreviewClasses = Object.keys(EFFECTS).map(function (item) {
-      return EFFECT_PREVIEW_PREFIX + item;
-    });
+  var init = function (links, messages) {
 
     var getHashTagsValidationResults = function (items) {
       var singleTagRules = {
@@ -91,99 +91,110 @@
 
     var getCustomValidationResult = function () {
       var result = true;
-      formInputs.forEach(function (item) {
+      links.formInputs.forEach(function (item) {
         result = result && item.validity.valid;
       });
       return result;
     };
 
     var resetFormInputs = function () {
-      formInputs.forEach(function (item) {
+      links.formInputs.forEach(function (item) {
         item.value = '';
       });
-      uploadFile.value = '';
+      links.uploadFile.value = '';
     };
 
     var onCancelButtonClick = function (evt) {
-      window.events.isEvent(evt, hideForm);
+      window.general.isEvent(evt, hideForm);
     };
 
     var onDocumentKeyDown = function (evt) {
-      window.events.isEscEvent(evt, hideForm);
+      window.general.isEscEvent(evt, hideForm);
     };
 
     var showForm = function () {
-      if (formOverlay) {
+      if (links.formOverlay) {
         if (NEED_DEFAULT_STATE) {
           setDefaultState();
         }
         changeScaleValue();
         setFormInteractivity();
-        window.general.removeClassName(formOverlay, 'hidden');
-        var currentEffect = formOverlay.querySelector(CURRENT_EFFECT_SELECTOR);
+        window.general.removeClassName(links.formOverlay, 'hidden');
+        var currentEffect = links.formOverlay.querySelector(CURRENT_EFFECT_SELECTOR);
         if (currentEffect) {
           applyEffect(currentEffect.value);
           changeEffectLevelStyles();
         }
+        window.general.resetTabIndex(window.general.getMaxTabIndex(), links.formOverlayInteractiveItems);
+        links.formCancel.tabIndex = window.general.getIncreasedTabIndex();
+        window.general.setFocusOnObject(links.formCancel);
       }
     };
 
     var hideForm = function () {
-      if (formOverlay) {
+      if (links.formOverlay) {
         if (NO_ESCAPE_NAMES.indexOf(document.activeElement.name) !== -1) {
           return false;
         }
         removeFormInteractivity();
         resetFormInputs();
-        window.general.addClassName(formOverlay, 'hidden');
+        window.general.resetTabIndex(window.general.getDefaultTabIndex(), links.formOverlayInteractiveItems);
+        window.general.addClassName(links.formOverlay, 'hidden');
+        window.general.setFocusOnObject(links.uploadFile);
       }
       return false;
     };
 
-    var switchFormInteractivity = function (action, pinInteractivity) {
+    var onFormTabKeyDown = function (evt) {
+      window.general.isOverlayTabEvent(evt, links.formCancel, links.formSubmit);
+    };
+
+    var switchFormInteractivity = function (action) {
       document[action]('keydown', onDocumentKeyDown);
-      if (form) {
-        form[action]('submit', onSubmit);
-        form[action]('change', onFormChange);
-        if (formCancel) {
-          formCancel[action]('click', onCancelButtonClick);
+      if (links.form) {
+        links.form[action]('submit', onSubmit);
+        links.form[action]('change', onFormChange);
+        links.form[action]('keydown', onFormTabKeyDown);
+        if (links.formCancel) {
+          links.formCancel[action]('click', onCancelButtonClick);
         }
-        if (formPin) {
-          pinInteractivity();
+        if (links.formPin) {
+          links.formPin[action]('mousedown', onPinMouseDown);
+          links.formPin[action]('keydown', onPinKeyDown);
         }
-        if (formZoomer && formScaleDecrease && formScaleIncrease && formScaleValue) {
-          formScaleDecrease[action]('click', onDecreaseClick);
-          formScaleIncrease[action]('click', onIncreaseClick);
+        if (formZoomer && links.formScaleDecrease && links.formScaleIncrease && links.formScaleValue) {
+          links.formScaleDecrease[action]('click', onDecreaseClick);
+          links.formScaleIncrease[action]('click', onIncreaseClick);
         }
       }
     };
 
     var setFormInteractivity = function () {
-      switchFormInteractivity('addEventListener', setRangeInteractivity);
+      switchFormInteractivity('addEventListener');
     };
 
     var removeFormInteractivity = function () {
-      switchFormInteractivity('removeEventListener', removeRangeInteractivity);
+      switchFormInteractivity('removeEventListener');
     };
 
     var setDefaultState = function () {
-      if (formEffectDefault) {
-        formEffectDefault.checked = true;
+      if (links.formEffectDefault) {
+        links.formEffectDefault.checked = true;
       }
       setEffectLevelValue(DEFAULT_EFFECT_LEVEL);
       applyEffect(DEFAULT_EFFECT_NAME);
     };
 
     var changeScaleValue = function () {
-      if (formScaleValue) {
-        formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : ZOOM_DEFAULT_VALUE) + '%';
+      if (links.formScaleValue) {
+        links.formScaleValue.value = ((formZoomer) ? formZoomer.getValue() : ZOOM_DEFAULT_VALUE) + '%';
         setStyleByScaleValue();
       }
     };
 
     var setStyleByScaleValue = function () {
-      if (formScaleValue && formImgPreview) {
-        formImgPreview.parentElement.style.transform = 'scale(' + parseInt(formScaleValue.value, 10) / 100 + ')';
+      if (links.formScaleValue && links.formImgPreview) {
+        links.formImgPreview.parentElement.style.transform = 'scale(' + parseInt(links.formScaleValue.value, 10) / 100 + ')';
       }
     };
 
@@ -235,8 +246,8 @@
     };
 
     var setEffectLevelValue = function (percent) {
-      if (formEffectLevel) {
-        formEffectLevel.value = Math.round(100 * percent) / 100;
+      if (links.formEffectLevel) {
+        links.formEffectLevel.value = Math.round(100 * percent) / 100;
       }
     };
 
@@ -248,30 +259,42 @@
     };
 
     var changeEffectLevelStyles = function () {
-      if (formPin && formEffectLevel && formEffectDepth) {
-        var levelValue = getEffectLevelValue(formEffectLevel);
-        formPin.style.left = levelValue + '%';
-        formEffectDepth.style.width = levelValue + '%';
-        setStyleByEffectLevel(formImgPreview, getCurrentEffect(), levelValue);
+      if (links.formPin && links.formEffectLevel && links.formEffectDepth) {
+        var levelValue = getEffectLevelValue(links.formEffectLevel);
+        links.formPin.style.left = levelValue + '%';
+        links.formEffectDepth.style.width = levelValue + '%';
+        setStyleByEffectLevel(links.formImgPreview, getCurrentEffect(), levelValue);
       }
     };
 
     var getCurrentEffect = function () {
-      var currentEffect = window.dom.getElementBySelector(form, CURRENT_EFFECT_SELECTOR);
+      var currentEffect = window.dom.getElementBySelector(links.form, CURRENT_EFFECT_SELECTOR);
       return (currentEffect) ? currentEffect.value : DEFAULT_EFFECT_NAME;
+    };
+
+    var refreshKeyboardSliderState = function (isNeedDecrease) {
+      var lineWidth = links.formPin.parentElement.offsetWidth;
+      var newX = links.formPin.offsetLeft + (isNeedDecrease ? (-1) : 1) * PIN_KEYBOARD_STEP * lineWidth / 100;
+      var sliderValue = window.common.getLimitedValue(newX, 0, lineWidth) / lineWidth * 100;
+      setEffectLevelValue(sliderValue);
+      changeEffectLevelStyles();
+    };
+
+    var onPinKeyDown = function (evt) {
+      window.general.isArrowEvent(evt, refreshKeyboardSliderState);
     };
 
     var onPinMouseDown = function (evt) {
       var refreshSliderState = function (moveUpEvt) {
         var newX = moveUpEvt.pageX - shiftX - sliderX;
-        var lineWidth = formPin.parentElement.offsetWidth;
+        var lineWidth = links.formPin.parentElement.offsetWidth;
         var sliderValue = window.common.getLimitedValue(newX, 0, lineWidth) / lineWidth * 100;
         setEffectLevelValue(sliderValue);
         changeEffectLevelStyles();
       };
 
       var onPinMouseUp = function (upEvt) {
-        if (formPin) {
+        if (links.formPin) {
           refreshSliderState(upEvt);
           document.removeEventListener('mouseup', onPinMouseUp);
           document.removeEventListener('mousemove', onPinMouseMove);
@@ -282,9 +305,9 @@
         refreshSliderState(moveEvt);
       };
 
-      if (formPin) {
-        var sliderX = window.dom.getXCoordinate(formPin.parentElement);
-        var pinX = window.dom.getXCoordinate(formPin);
+      if (links.formPin) {
+        var sliderX = window.dom.getXCoordinate(links.formPin.parentElement);
+        var pinX = window.dom.getXCoordinate(links.formPin);
         var shiftX = evt.pageX - pinX;
         evt.preventDefault();
         document.addEventListener('mouseup', onPinMouseUp);
@@ -292,39 +315,33 @@
       }
     };
 
-    var setRangeInteractivity = function () {
-      formPin.addEventListener('mousedown', onPinMouseDown);
-    };
-
-    var removeRangeInteractivity = function () {
-      formPin.removeEventListener('mousedown', onPinMouseDown);
-    };
-
     var applyEffect = function (effect) {
-      if (formImgPreview && formEffectLevel) {
-        window.dom.removeAlternatives(formImgPreview, effectPreviewClasses);
+      if (links.formImgPreview && links.formEffectLevel && links.formPin) {
+        window.dom.removeAlternatives(links.formImgPreview, effectPreviewClasses);
         if (effect !== DEFAULT_EFFECT_NAME) {
-          window.general.addClassName(formImgPreview, EFFECT_PREVIEW_PREFIX + effect);
-          if (formEffectContainer) {
-            window.general.removeClassName(formEffectContainer, 'visually-hidden');
+          window.general.addClassName(links.formImgPreview, EFFECT_PREVIEW_PREFIX + effect);
+          if (links.formEffectContainer) {
+            window.general.removeClassName(links.formEffectContainer, 'visually-hidden');
+            links.formPin.tabIndex = window.general.getMaxTabIndex();
           }
         } else {
-          if (formEffectContainer) {
-            window.general.addClassName(formEffectContainer, 'visually-hidden');
+          if (links.formEffectContainer) {
+            window.general.addClassName(links.formEffectContainer, 'visually-hidden');
+            links.formPin.tabIndex = window.general.getDisabledTabIndex();
           }
         }
-        setStyleByEffectLevel(formImgPreview, effect, getEffectLevelValue(formEffectLevel));
+        setStyleByEffectLevel(links.formImgPreview, effect, getEffectLevelValue(links.formEffectLevel));
       }
     };
 
     var onPostDataError = function (errorMessage) {
       hideForm();
-      window.message.initMessage(messages.errorMessage, errorMessage);
+      window.message.init(messages.errorMessage, errorMessage);
     };
 
     var onPostData = function () {
       hideForm();
-      window.message.initMessage(messages.successMessage);
+      window.message.init(messages.successMessage);
     };
 
     var onSubmit = function (evt) {
@@ -332,32 +349,17 @@
       var validationResult = getCustomValidationResult();
       if (validationResult) {
         if (window.backend) {
-          window.backend.postData(new FormData(form), onPostData, onPostDataError);
+          window.backend.postData(new FormData(links.form), onPostData, onPostDataError);
         }
       }
     };
 
-    var uploadFile = links.uploadFile;
-    var form = links.form;
-    var formOverlay = links.formOverlay;
-    var formCancel = links.formCancel;
-    var formPin = links.formPin;
-    var formEffectContainer = links.formEffectContainer;
-    var formEffectLevel = links.formEffectLevel;
-    var formEffectDepth = links.formEffectDepth;
-    var formEffectDefault = links.formEffectDefault;
-    var formImgPreview = links.formImgPreview;
-    var formInputs = links.formInputs;
-    var formScaleDecrease = links.formScaleDecrease;
-    var formScaleIncrease = links.formScaleIncrease;
-    var formScaleValue = links.formScaleValue;
     var formZoomer = (window.zoomer) ? (new window.zoomer.Zoomer(ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_DEFAULT_VALUE)) : null;
-
     showForm();
   };
 
   window.form = {
-    initEditingForm: initForm
+    init: init
   };
 
 })();

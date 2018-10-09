@@ -3,68 +3,82 @@
 (function () {
   var COMMENTS_PORTION_IN_MARKUP = 5;
 
-  var initBigPhoto = function (dataRecord, links) {
+  var initBigPhoto = function (dataRecord, links, currentPhoto) {
 
     var hideBigPhoto = function () {
-      if (form) {
+      if (links.bigPhoto) {
         removeFormInteractivity();
-        window.general.addClassName(form, 'hidden');
+        window.general.resetTabIndex(window.general.getDisabledTabIndex(), links.bigPhotoInteractiveItems);
+        window.general.addClassName(links.bigPhoto, 'hidden');
+        window.general.setFocusOnObject(currentPhoto);
       }
     };
 
     var showBigPhoto = function () {
-      if (form) {
+      if (links.bigPhoto) {
         setFormInteractivity();
         renderForm(dataRecord);
-        window.general.removeClassName(form, 'hidden');
+        window.general.removeClassName(links.bigPhoto, 'hidden');
+        if (links.bigPhotoCancel) {
+          window.general.resetTabIndex(window.general.getMaxTabIndex(), links.bigPhotoInteractiveItems);
+          links.bigPhotoCancel.tabIndex = window.general.getIncreasedTabIndex();
+          window.general.setFocusOnObject(links.bigPhotoCancel);
+        }
       }
     };
 
     var loadMore = function () {
       var nextStage = shownCommentsAmount + Math.min(dataRecord.comments.length - shownCommentsAmount, COMMENTS_PORTION_IN_MARKUP);
       for (var i = shownCommentsAmount; i < nextStage; i++) {
-        window.general.removeClassName(formComments.childNodes[i], 'visually-hidden');
+        window.general.removeClassName(links.bigPhotoComments.childNodes[i], 'visually-hidden');
       }
       shownCommentsAmount = nextStage;
       setCommentsState();
     };
 
     var setCommentsState = function () {
-      if (totalComments) {
-        var markup = totalComments.innerHTML;
+      if (links.totalComments) {
+        var markup = links.totalComments.innerHTML;
         markup = markup.replace(/\d*\sиз\s/, shownCommentsAmount + ' из ');
-        totalComments.innerHTML = markup;
+        links.totalComments.innerHTML = markup;
       }
-      if (formCommentsLoader) {
+      if (links.bigPhotoCommentsLoader) {
         var needToHide = ((shownCommentsAmount < COMMENTS_PORTION_IN_MARKUP) || ((shownCommentsAmount) >= dataRecord.comments.length));
-        formCommentsLoader.disabled = needToHide;
+        links.bigPhotoCommentsLoader.disabled = needToHide;
         if (needToHide) {
-          window.general.addClassName(formCommentsLoader, 'hidden');
+          window.general.addClassName(links.bigPhotoCommentsLoader, 'hidden');
         } else {
-          window.general.removeClassName(formCommentsLoader, 'hidden');
+          window.general.removeClassName(links.bigPhotoCommentsLoader, 'hidden');
         }
       }
     };
 
     var onLoaderClick = function (evt) {
-      window.events.isEvent(evt, loadMore);
+      window.general.isEvent(evt, loadMore);
     };
 
     var onCancelButtonClick = function (evt) {
-      window.events.isEvent(evt, hideBigPhoto);
+      window.general.isEvent(evt, hideBigPhoto);
     };
 
     var onDocumentKeyDown = function (evt) {
-      window.events.isEscEvent(evt, hideBigPhoto);
+      window.general.isEscEvent(evt, hideBigPhoto);
+    };
+
+    var onOverlayTabKeyDown = function (evt) {
+      window.general.isOverlayTabEvent(evt, links.bigPhotoCancel, links.bigPhotoLastButton);
     };
 
     var switchFormInteractivity = function (action) {
       document[action]('keydown', onDocumentKeyDown);
-      if (formCancel) {
-        formCancel[action]('click', onCancelButtonClick);
+      if (links.bigPhotoCancel) {
+        links.bigPhotoCancel[action]('click', onCancelButtonClick);
       }
-      if (formCommentsLoader) {
-        formCommentsLoader[action]('click', onLoaderClick);
+      if (links.bigPhotoCommentsLoader) {
+        links.bigPhotoCommentsLoader[action]('click', onLoaderClick);
+      }
+      if (links.bigPhoto) {
+        links.bigPhoto[action]('keydown', onOverlayTabKeyDown);
       }
     };
 
@@ -76,7 +90,7 @@
       switchFormInteractivity('removeEventListener');
     };
 
-    var renderComments = function (parent, comments) {
+    var renderComments = function (parent, comments, insertionPoint, pseudoTemplate) {
       var createComment = function (template, comment, index) {
         var element = template.cloneNode(true);
         window.dom.setAttributeBySelector(element, '.social__picture', 'src', window.common.getRandomAvatar());
@@ -87,7 +101,6 @@
         return element;
       };
 
-      var insertionPoint = formComments;
       if (insertionPoint && pseudoTemplate) {
         var template = pseudoTemplate.cloneNode(true);
         var fragment = document.createDocumentFragment();
@@ -102,22 +115,16 @@
     };
 
     var renderForm = function () {
-      if (form) {
-        window.dom.setAttributeBySelector(form, '.big-picture__img > img', 'src', dataRecord.url);
-        window.dom.setAttributeBySelector(form, '.likes-count', 'textContent', dataRecord.likes);
-        window.dom.setAttributeBySelector(form, '.comments-count', 'textContent', dataRecord.comments.length);
-        window.dom.setAttributeBySelector(form, '.social__caption', 'textContent', dataRecord.description);
-        renderComments(form, dataRecord.comments);
+      if (links.bigPhoto) {
+        window.dom.setAttributeBySelector(links.bigPhoto, '.big-picture__img > img', 'src', dataRecord.url);
+        window.dom.setAttributeBySelector(links.bigPhoto, '.likes-count', 'textContent', dataRecord.likes);
+        window.dom.setAttributeBySelector(links.bigPhoto, '.comments-count', 'textContent', dataRecord.comments.length);
+        window.dom.setAttributeBySelector(links.bigPhoto, '.social__caption', 'textContent', dataRecord.description);
+        renderComments(links.bigPhoto, dataRecord.comments, links.bigPhotoComments, links.pseudoTemplate);
         setCommentsState();
       }
     };
 
-    var pseudoTemplate = links.pseudoTemplate;
-    var totalComments = links.totalComments;
-    var form = links.bigPhoto;
-    var formCancel = links.bigPhotoCancel;
-    var formComments = links.bigPhotoComments;
-    var formCommentsLoader = links.bigPhotoCommentsLoader;
     var shownCommentsAmount = Math.min(dataRecord.comments.length, COMMENTS_PORTION_IN_MARKUP);
     showBigPhoto(dataRecord);
   };
