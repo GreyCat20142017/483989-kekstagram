@@ -65,12 +65,12 @@
 
     getPhotosByRank: function (entities) {
       var reSortedEntities = entities.slice().sort(function (firstItem, secondItem) {
-        var rank = (firstItem.comments && secondItem.comments) ? (secondItem.comments.length - firstItem.comments.length) : 0;
+        var rank = secondItem.comments.length - firstItem.comments.length;
         if (rank === 0) {
-          rank = (firstItem.likes && secondItem.likes) ? (parseInt(secondItem.likes, 10) - parseInt(firstItem.likes, 10)) : 0;
+          rank = parseInt(secondItem.likes, 10) - parseInt(firstItem.likes, 10);
         }
         if (rank === 0) {
-          rank = (firstItem.url && secondItem.url) ? getStringCompareResult(firstItem.url, secondItem.url) : 0;
+          rank = getStringCompareResult(firstItem.url, secondItem.url);
         }
         return rank;
       });

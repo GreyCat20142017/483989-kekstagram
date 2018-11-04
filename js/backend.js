@@ -2,7 +2,7 @@
 
 (function () {
 
-  var URL_GET = 'https://js.dump.academy/kekstagram/data';
+  var URL_GET = 'https://greycat20142017.github.io/pseudodb/kekstagram.json';
   var URL_POST = 'https://js.dump.academy/kekstagram';
   var RESPONSE_TYPE = 'json';
   var RESPONSE_TIMEOUT = 8000;
